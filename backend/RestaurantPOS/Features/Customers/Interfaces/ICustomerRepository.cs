@@ -6,6 +6,7 @@ namespace RestaurantPOS.Features.Customers
     public interface ICustomerRepository
     {
         Task<IEnumerable<Customer>> GetAllAsync();
+        Task<IEnumerable<Customer>> SearchAsync(string query);
         Task<Customer> GetByIdAsync(int id);
         Task<Customer> GetByPhoneAsync(string phone);
         Task<int> CreateAsync(Customer customer);

@@ -56,6 +56,19 @@ export function useCustomerByPhone(phone: string) {
   });
 }
 
+export function useCustomerSearch(query: string) {
+  return useQuery({
+    queryKey: ["customers", "search", query],
+    queryFn: async () => {
+      const response = await apiClient.get<Customer[]>(
+        `/customers/search?q=${encodeURIComponent(query)}`
+      );
+      return response.data;
+    },
+    enabled: query.length >= 2,
+  });
+}
+
 export function useCreateCustomer() {
   const queryClient = useQueryClient();
 

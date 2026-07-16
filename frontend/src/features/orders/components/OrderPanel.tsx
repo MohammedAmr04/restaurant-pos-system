@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/lib/components/ui/button";
 import { OrderItemRow } from "./OrderItemRow";
 import { OrderTotals } from "./OrderTotals";
+import { CustomerSearch } from "./CustomerSearch";
 import { ORDER_TYPE } from "@/lib/constants/order-status";
 import type { Order, OrderItemDetailDto } from "../hooks";
 import type { CartItem } from "../types";
@@ -55,6 +56,7 @@ interface OrderPanelProps {
   onRemoveDiscount: () => void;
   onRemoveServiceCharge: () => void;
   onOpenItemNotes: (index: number) => void;
+  onOpenAddCustomer: () => void;
   holdCount: number;
   isCreating: boolean;
   isUpdatingItem: boolean;
@@ -95,6 +97,7 @@ export function OrderPanel({
   onRemoveDiscount,
   onRemoveServiceCharge,
   onOpenItemNotes,
+  onOpenAddCustomer,
   holdCount,
   isCreating,
   isUpdatingItem,
@@ -184,26 +187,13 @@ export function OrderPanel({
 
           {(orderType === ORDER_TYPE.DELIVERY ||
             orderType === ORDER_TYPE.TAKE_AWAY) && (
-            <select
-              value={selectedCustomerId || ""}
-              onChange={(e) =>
-                onCustomerChange(
-                  e.target.value ? Number(e.target.value) : null
-                )
-              }
-              className="flex-1 h-10 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm"
-            >
-              <option value="">
-                {orderType === ORDER_TYPE.DELIVERY
-                  ? t("selectCustomer")
-                  : t("selectCustomerOptional")}
-              </option>
-              {customers?.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.phone}
-                </option>
-              ))}
-            </select>
+            <CustomerSearch
+              selectedCustomerId={selectedCustomerId}
+              customers={customers}
+              onCustomerChange={onCustomerChange}
+              onOpenAddCustomer={onOpenAddCustomer}
+              required={orderType === ORDER_TYPE.DELIVERY}
+            />
           )}
 
           {orderType === ORDER_TYPE.DELIVERY && (

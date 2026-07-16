@@ -20,6 +20,16 @@ namespace RestaurantPOS.Features.Customers
             return await _connection.QueryAsync<Customer>(sql);
         }
 
+        public async Task<IEnumerable<Customer>> SearchAsync(string query)
+        {
+            var sql = @"SELECT * FROM Customers 
+                        WHERE DeletedAt IS NULL 
+                          AND (Phone LIKE @Query OR Name LIKE @Query) 
+                        ORDER BY Name 
+                        LIMIT 20";
+            return await _connection.QueryAsync<Customer>(sql, new { Query = $"%{query}%" });
+        }
+
         public async Task<Customer> GetByIdAsync(int id)
         {
             var sql = "SELECT * FROM Customers WHERE Id = @Id AND DeletedAt IS NULL";

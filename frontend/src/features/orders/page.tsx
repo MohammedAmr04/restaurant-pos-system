@@ -28,6 +28,7 @@ import { useCustomers } from "@/features/customers/hooks";
 import { useDeliveryRiders } from "@/features/delivery-riders/hooks";
 import {
   useOrders,
+  useOrder,
   useHoldOrders,
   useCreateOrder,
   useAddOrderItem,
@@ -46,6 +47,7 @@ import type { MenuItem } from "@/features/menu-items/hooks";
 import type { CartItem } from "./types";
 import { OrderPanel } from "./components/OrderPanel";
 import { MenuPanel } from "./components/MenuPanel";
+import { AddCustomerDialog } from "./components/AddCustomerDialog";
 
 export default function POSPage() {
   const router = useRouter();
@@ -56,7 +58,7 @@ export default function POSPage() {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [selectedRiderId, setSelectedRiderId] = useState<number | null>(null);
-  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [activeOrderId, setActiveOrderId] = useState<number | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [menuSearch, setMenuSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
@@ -74,12 +76,14 @@ export default function POSPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>(PAYMENT_METHOD.CASH);
   const [paidAmount, setPaidAmount] = useState<number>(0);
   const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
 
   const { data: menuItems, isLoading: isLoadingMenu } = useMenuItems();
   const { data: tables } = useTables();
   const { data: customers } = useCustomers();
   const { data: riders } = useDeliveryRiders();
   const { data: holdOrders } = useHoldOrders();
+  const { data: serverOrder } = useOrder(activeOrderId ?? 0);
 
   const createOrderMutation = useCreateOrder();
   const addItemMutation = useAddOrderItem();
@@ -115,23 +119,29 @@ export default function POSPage() {
   }, [menuItems, menuSearch, categoryFilter]);
 
   const cartSubtotal = useMemo(() => {
+    if (serverOrder) return serverOrder.subtotal;
     return cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  }, [cartItems]);
+  }, [cartItems, serverOrder]);
 
   const cartDiscount = useMemo(() => {
-    if (!activeOrder?.discountType) return 0;
-    if (activeOrder.discountType === DISCOUNT_TYPE.PERCENTAGE) {
-      return (cartSubtotal * activeOrder.discountValue) / 100;
+    if (serverOrder) {
+      if (!serverOrder.discountType) return 0;
+      if (serverOrder.discountType === DISCOUNT_TYPE.PERCENTAGE) {
+        return (serverOrder.subtotal * serverOrder.discountValue) / 100;
+      }
+      return serverOrder.discountValue;
     }
-    return activeOrder.discountValue;
-  }, [cartSubtotal, activeOrder]);
+    return 0;
+  }, [serverOrder]);
 
-  const cartServiceCharge = activeOrder?.serviceCharge || 0;
-  const cartTax = activeOrder?.tax || 0;
-  const cartGrandTotal = cartSubtotal - cartDiscount + cartServiceCharge + cartTax;
+  const cartServiceCharge = serverOrder?.serviceCharge || 0;
+  const cartTax = serverOrder?.tax || 0;
+  const cartGrandTotal = serverOrder
+    ? serverOrder.grandTotal
+    : cartSubtotal - cartDiscount + cartServiceCharge + cartTax;
 
   const resetForm = () => {
-    setActiveOrder(null);
+    setActiveOrderId(null);
     setCartItems([]);
     setSelectedTableId(null);
     setSelectedCustomerId(null);
@@ -141,7 +151,7 @@ export default function POSPage() {
   };
 
   const handleOrderTypeChange = (type: string) => {
-    if (activeOrder) return;
+    if (serverOrder) return;
     setOrderType(type);
     setSelectedTableId(null);
     setSelectedCustomerId(null);
@@ -149,7 +159,7 @@ export default function POSPage() {
   };
 
   const handleAddToCart = (menuItemId: number, name: string, price: number) => {
-    if (activeOrder) return;
+    if (serverOrder) return;
     setCartItems((prev) => {
       const existing = prev.find((item) => item.menuItemId === menuItemId);
       if (existing) {
@@ -162,7 +172,7 @@ export default function POSPage() {
   };
 
   const handleUpdateCartQty = (index: number, delta: number) => {
-    if (activeOrder) return;
+    if (serverOrder) return;
     setCartItems((prev) => {
       const newItems = [...prev];
       const newQty = newItems[index].quantity + delta;
@@ -176,7 +186,7 @@ export default function POSPage() {
   };
 
   const handleRemoveCartItem = (index: number) => {
-    if (activeOrder) return;
+    if (serverOrder) return;
     setCartItems((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -197,6 +207,11 @@ export default function POSPage() {
     setItemNotes("");
   };
 
+  const handleCustomerCreated = (customerId: number) => {
+    setSelectedCustomerId(customerId);
+    setIsAddCustomerOpen(false);
+  };
+
   const handleCreateOrder = async () => {
     const items = cartItems.map((item) => ({
       menuItemId: item.menuItemId,
@@ -211,24 +226,24 @@ export default function POSPage() {
       items,
     };
     const result = await createOrderMutation.mutateAsync(orderData);
-    setActiveOrder(result);
+    setActiveOrderId(result.id);
   };
 
   const handleAddItemToOrder = async (menuItemId: number, name: string, price: number) => {
-    if (!activeOrder) return;
+    if (!serverOrder) return;
     await addItemMutation.mutateAsync({
-      orderId: activeOrder.id,
+      orderId: serverOrder.id,
       data: { menuItemId, quantity: 1 },
     });
   };
 
   const handleUpdateOrderItemQty = async (itemId: number, newQty: number) => {
-    if (!activeOrder) return;
+    if (!serverOrder) return;
     if (newQty <= 0) {
-      await removeItemMutation.mutateAsync({ orderId: activeOrder.id, itemId });
+      await removeItemMutation.mutateAsync({ orderId: serverOrder.id, itemId });
     } else {
       await updateItemMutation.mutateAsync({
-        orderId: activeOrder.id,
+        orderId: serverOrder.id,
         itemId,
         data: { quantity: newQty },
       });
@@ -236,40 +251,40 @@ export default function POSPage() {
   };
 
   const handleRemoveOrderItem = async (itemId: number) => {
-    if (!activeOrder) return;
-    await removeItemMutation.mutateAsync({ orderId: activeOrder.id, itemId });
+    if (!serverOrder) return;
+    await removeItemMutation.mutateAsync({ orderId: serverOrder.id, itemId });
   };
 
   const handleApplyDiscount = async () => {
-    if (!activeOrder) return;
+    if (!serverOrder) return;
     await applyDiscountMutation.mutateAsync({
-      orderId: activeOrder.id,
+      orderId: serverOrder.id,
       data: { discountType, discountValue },
     });
     setIsDiscountOpen(false);
   };
 
   const handleRemoveDiscount = async () => {
-    if (!activeOrder) return;
-    await removeDiscountMutation.mutateAsync(activeOrder.id);
+    if (!serverOrder) return;
+    await removeDiscountMutation.mutateAsync(serverOrder.id);
   };
 
   const handleApplyServiceCharge = async () => {
-    if (!activeOrder) return;
+    if (!serverOrder) return;
     await applyServiceChargeMutation.mutateAsync({
-      orderId: activeOrder.id,
+      orderId: serverOrder.id,
       data: { serviceCharge: serviceChargeValue },
     });
     setIsServiceChargeOpen(false);
   };
 
   const handleRemoveServiceCharge = async () => {
-    if (!activeOrder) return;
-    await removeServiceChargeMutation.mutateAsync(activeOrder.id);
+    if (!serverOrder) return;
+    await removeServiceChargeMutation.mutateAsync(serverOrder.id);
   };
 
   const handleHoldOrder = async () => {
-    if (!activeOrder) {
+    if (!serverOrder) {
       await handleCreateOrder();
     }
     resetForm();
@@ -277,7 +292,7 @@ export default function POSPage() {
 
   const handleResumeOrder = async (order: Order) => {
     await resumeOrderMutation.mutateAsync(order.id);
-    setActiveOrder(order);
+    setActiveOrderId(order.id);
     setOrderType(order.orderType);
     setSelectedTableId(order.tableId);
     setSelectedCustomerId(order.customerId);
@@ -286,9 +301,9 @@ export default function POSPage() {
   };
 
   const handleCompleteOrder = async () => {
-    if (!activeOrder) return;
+    if (!serverOrder) return;
     await completeOrderMutation.mutateAsync({
-      orderId: activeOrder.id,
+      orderId: serverOrder.id,
       data: { paymentMethod, paidAmount: paidAmount || cartGrandTotal },
     });
     resetForm();
@@ -299,7 +314,7 @@ export default function POSPage() {
     if (!deletingOrder) return;
     await deleteOrderMutation.mutateAsync(deletingOrder.id);
     setDeletingOrder(null);
-    if (activeOrder?.id === deletingOrder.id) {
+    if (serverOrder?.id === deletingOrder.id) {
       resetForm();
     }
   };
@@ -333,7 +348,7 @@ export default function POSPage() {
           <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
         </div>
         <div className="flex items-center gap-2">
-          {!activeOrder && cartItems.length === 0 && (
+          {!serverOrder && cartItems.length === 0 && (
             <Button variant="destructive" size="sm" onClick={resetForm}>
               {tCommon("new")}
             </Button>
@@ -354,14 +369,14 @@ export default function POSPage() {
             onCustomerChange={setSelectedCustomerId}
             selectedRiderId={selectedRiderId}
             onRiderChange={setSelectedRiderId}
-            activeOrder={activeOrder}
+            activeOrder={serverOrder ?? null}
             cartItems={cartItems}
             tables={tables}
             customers={customers}
             riders={riders}
             subtotal={cartSubtotal}
             discount={cartDiscount}
-            discountType={activeOrder?.discountType || null}
+            discountType={serverOrder?.discountType || null}
             serviceCharge={cartServiceCharge}
             tax={cartTax}
             grandTotal={cartGrandTotal}
@@ -379,6 +394,7 @@ export default function POSPage() {
             onRemoveDiscount={handleRemoveDiscount}
             onRemoveServiceCharge={handleRemoveServiceCharge}
             onOpenItemNotes={handleOpenItemNotes}
+            onOpenAddCustomer={() => setIsAddCustomerOpen(true)}
             holdCount={holdOrders?.length || 0}
             isCreating={createOrderMutation.isPending}
             isUpdatingItem={updateItemMutation.isPending}
@@ -395,7 +411,7 @@ export default function POSPage() {
             onSearchChange={setMenuSearch}
             categoryFilter={categoryFilter}
             onCategoryChange={setCategoryFilter}
-            onAddItem={activeOrder ? handleAddItemToOrder : handleAddToCart}
+            onAddItem={serverOrder ? handleAddItemToOrder : handleAddToCart}
             isAddingItem={addItemMutation.isPending}
           />
         </div>
@@ -621,6 +637,12 @@ export default function POSPage() {
         confirmText={tCommon("delete")}
         variant="danger"
         isLoading={deleteOrderMutation.isPending}
+      />
+
+      <AddCustomerDialog
+        isOpen={isAddCustomerOpen}
+        onClose={() => setIsAddCustomerOpen(false)}
+        onCustomerCreated={handleCustomerCreated}
       />
     </div>
   );

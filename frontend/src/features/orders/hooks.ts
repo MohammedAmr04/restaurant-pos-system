@@ -110,7 +110,8 @@ export function useCreateOrder() {
       const response = await apiClient.post<Order>("/orders", data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(data.id), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
@@ -133,9 +134,9 @@ export function useAddOrderItem() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(variables.orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -159,9 +160,9 @@ export function useUpdateOrderItem() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(variables.orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -182,9 +183,9 @@ export function useRemoveOrderItem() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(variables.orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -206,9 +207,9 @@ export function useApplyDiscount() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(variables.orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -223,9 +224,9 @@ export function useRemoveDiscount() {
       );
       return response.data;
     },
-    onSuccess: (_data, orderId) => {
+    onSuccess: (data, orderId) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -247,9 +248,9 @@ export function useApplyServiceCharge() {
       );
       return response.data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(variables.orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(variables.orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -264,9 +265,9 @@ export function useRemoveServiceCharge() {
       );
       return response.data;
     },
-    onSuccess: (_data, orderId) => {
+    onSuccess: (data, orderId) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(orderId), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDER(orderId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
     },
   });
@@ -288,7 +289,8 @@ export function useCompleteOrder() {
       );
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(data.id), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TABLES });
@@ -305,7 +307,8 @@ export function useResumeOrder() {
       );
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.ORDER(data.id), data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TABLES });

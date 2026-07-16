@@ -20,6 +20,12 @@ namespace RestaurantPOS.Features.Customers
             return customers.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<CustomerDto>> SearchAsync(string query)
+        {
+            var customers = await _customerRepository.SearchAsync(query);
+            return customers.Select(MapToDto);
+        }
+
         public async Task<CustomerDto> GetByIdAsync(int id)
         {
             var customer = await _customerRepository.GetByIdAsync(id);

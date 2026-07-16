@@ -29,6 +29,18 @@ namespace RestaurantPOS.Features.Customers.Controllers
         }
 
         [HttpGet]
+        [Route("search")]
+        public async Task<IHttpActionResult> Search([FromUri] string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return Ok(ApiResponse<IEnumerable<CustomerDto>>.Ok(new List<CustomerDto>()));
+            }
+            var customers = await _customerService.SearchAsync(q.Trim());
+            return Ok(ApiResponse<IEnumerable<CustomerDto>>.Ok(customers));
+        }
+
+        [HttpGet]
         [Route("{id:int}")]
         public async Task<IHttpActionResult> GetById(int id)
         {
