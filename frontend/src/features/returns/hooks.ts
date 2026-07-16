@@ -7,8 +7,7 @@ export interface ReturnItemDetailDto {
   orderItemId: number;
   menuItemName: string;
   quantity: number;
-  unitPrice: number;
-  total: number;
+  refundAmount: number;
 }
 
 export interface ReturnDto {

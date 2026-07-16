@@ -441,10 +441,7 @@ export default function ReturnsPage() {
                         {t("returnedItemsTable.quantity")}
                       </th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">
-                        {t("returnedItemsTable.unitPrice")}
-                      </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">
-                        {t("returnedItemsTable.total")}
+                        {t("returnedItemsTable.refundAmount")}
                       </th>
                     </tr>
                   </thead>
@@ -458,10 +455,7 @@ export default function ReturnsPage() {
                           {item.quantity}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-900">
-                          {item.unitPrice.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-gray-900">
-                          {item.total.toFixed(2)}
+                          {item.refundAmount.toFixed(2)}
                         </td>
                       </tr>
                     ))}

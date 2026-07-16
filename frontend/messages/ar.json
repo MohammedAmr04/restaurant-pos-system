@@ -38,6 +38,7 @@
     "available": "متاح",
     "unavailable": "غير متاح",
     "close": "إغلاق",
+    "export": "تصدير",
     "loadingData": "جاري تحميل البيانات...",
     "noResults": "لا توجد نتائج",
     "page": "صفحة",
@@ -275,8 +276,7 @@
     "returnedItemsTable": {
       "item": "الصنف",
       "quantity": "الكمية",
-      "unitPrice": "سعر الوحدة",
-      "total": "الإجمالي"
+      "refundAmount": "مبلغ الاسترداد"
     }
   },
   "expenses": {
@@ -350,7 +350,11 @@
     "emptyForPeriod": "لا توجد بيانات لهذه الفترة",
     "emptyDelivery": "لا توجد بيانات توصيل لهذه الفترة",
     "emptyExpenses": "لا توجد مصروفات لهذه الفترة",
-    "emptyReturns": "لا توجد مرتجعات لهذه الفترة"
+    "emptyReturns": "لا توجد مرتجعات لهذه الفترة",
+    "reportDetails": "تفاصيل التقرير",
+    "riderDetails": "تفاصيل السائق",
+    "expenseDetails": "تفاصيل المصروف",
+    "returnDetails": "تفاصيل المرجع"
   },
   "settings": {
     "title": "الإعدادات",
@@ -452,7 +456,12 @@
     "maxPercent": "{field} يجب أن لا تتجاوز 100",
     "selectAtLeast": "يجب اختيار {field} واحد على الأقل",
     "selectField": "يجب اختيار {field}",
-    "fieldRequired": "{field} مطلوب"
+    "fieldRequired": "{field} مطلوب",
+    "menuItem": "الصنف",
+    "quantity": "الكمية",
+    "order": "الطلب",
+    "reason": "السبب",
+    "oneItem": "صنف واحد"
   },
   "months": {
     "january": "يناير",

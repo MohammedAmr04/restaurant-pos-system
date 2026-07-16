@@ -13,19 +13,22 @@ namespace RestaurantPOS.Features.Returns
         private readonly IOrderRepository _orderRepository;
         private readonly IOrderItemRepository _orderItemRepository;
         private readonly MenuItems.IMenuItemRepository _menuItemRepository;
+        private readonly Authentication.IUserRepository _userRepository;
 
         public ReturnService(
             IReturnRepository returnRepository,
             IReturnItemRepository returnItemRepository,
             IOrderRepository orderRepository,
             IOrderItemRepository orderItemRepository,
-            MenuItems.IMenuItemRepository menuItemRepository)
+            MenuItems.IMenuItemRepository menuItemRepository,
+            Authentication.IUserRepository userRepository)
         {
             _returnRepository = returnRepository;
             _returnItemRepository = returnItemRepository;
             _orderRepository = orderRepository;
             _orderItemRepository = orderItemRepository;
             _menuItemRepository = menuItemRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<IEnumerable<ReturnDto>> GetAllAsync()
@@ -101,6 +104,7 @@ namespace RestaurantPOS.Features.Returns
         private async Task<ReturnDto> MapToDto(Return returnEntity)
         {
             var order = await _orderRepository.GetByIdAsync(returnEntity.OrderId);
+            var user = await _userRepository.GetByIdAsync(returnEntity.UserId);
             var items = await _returnItemRepository.GetByReturnIdAsync(returnEntity.Id);
             var itemDetails = new List<ReturnItemDetailDto>();
 
@@ -124,6 +128,7 @@ namespace RestaurantPOS.Features.Returns
                 OrderId = returnEntity.OrderId,
                 InvoiceNumber = order?.InvoiceNumber ?? "Unknown",
                 UserId = returnEntity.UserId,
+                UserName = user?.Username ?? "Unknown",
                 TotalRefund = returnEntity.TotalRefund,
                 Reason = returnEntity.Reason,
                 CreatedAt = returnEntity.CreatedAt,

@@ -15,7 +15,7 @@ namespace RestaurantPOS.Shared
         private const string SecretKey = "RestaurantPOSSecretKey2024!@#$%^&*()_+ThisIsAVeryLongSecretKeyForJWT";
         private const string Issuer = "RestaurantPOS";
         private const string Audience = "RestaurantPOS";
-        private const int ExpirationMinutes = 480;
+        private const int ExpirationMinutes = 10080; // 7 days
 
         public static string GetSecretKey() => SecretKey;
         public static string GetIssuer() => Issuer;

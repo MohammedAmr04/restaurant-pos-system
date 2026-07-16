@@ -11,10 +11,19 @@ import {
   Receipt,
   RotateCcw,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants/routes";
 import { LoadingOverlay } from "@/lib/components/ui/loading-overlay";
 import { EmptyState } from "@/lib/components/ui/empty-state";
+import { Button } from "@/lib/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/lib/components/ui/dialog";
+import { generateReportPdf } from "@/lib/utils/generate-report-pdf";
 import {
   useDailyReport,
   useMonthlyReport,
@@ -65,6 +74,7 @@ function DailyReportTab() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
   const [date, setDate] = useState(getToday());
+  const [viewingDay, setViewingDay] = useState<any>(null);
   const { data, isLoading } = useDailyReport(date);
 
   if (isLoading) {
@@ -81,6 +91,33 @@ function DailyReportTab() {
           onChange={(e) => setDate(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("daily"),
+                dateRange: { from: date, to: date },
+                headers: [t("date"), t("totalOrders"), t("completedOrders"), t("totalSales"), t("discounts"), t("serviceCharges"), t("returns"), t("expenses"), t("revenueBeforeExpenses"), t("revenueAfterExpenses")],
+                rows: [[
+                  new Date(data.businessDate).toLocaleDateString("ar-EG"),
+                  data.totalOrders,
+                  data.completedOrders,
+                  formatCurrency(data.totalSales),
+                  formatCurrency(data.discounts),
+                  formatCurrency(data.serviceCharge),
+                  formatCurrency(data.returns),
+                  formatCurrency(data.expenses),
+                  formatCurrency(data.revenueBeforeExpenses),
+                  formatCurrency(data.revenueAfterExpenses),
+                ]],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {data && (
@@ -106,6 +143,7 @@ function DailyReportTab() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("expenses")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("revenueBeforeExpenses")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("revenueAfterExpenses")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -122,6 +160,11 @@ function DailyReportTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.expenses)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.revenueBeforeExpenses)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.revenueAfterExpenses)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <Button variant="ghost" size="sm" onClick={() => setViewingDay(data)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -132,6 +175,28 @@ function DailyReportTab() {
       {data === null && (
         <EmptyState title={t("emptyTitle")} description={t("emptyForDate")} />
       )}
+
+      <Dialog open={!!viewingDay} onOpenChange={(open) => { if (!open) setViewingDay(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("reportDetails")}</DialogTitle>
+          </DialogHeader>
+          {viewingDay && (
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-gray-500">{t("date")}</p><p className="text-sm font-medium">{new Date(viewingDay.businessDate).toLocaleDateString("ar-EG")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("totalOrders")}</p><p className="text-sm font-medium">{viewingDay.totalOrders}</p></div>
+              <div><p className="text-sm text-gray-500">{t("completedOrders")}</p><p className="text-sm font-medium">{viewingDay.completedOrders}</p></div>
+              <div><p className="text-sm text-gray-500">{t("totalSales")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.totalSales)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("discounts")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.discounts)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("serviceCharges")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.serviceCharge)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("returns")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.returns)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("expenses")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.expenses)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("revenueBeforeExpenses")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.revenueBeforeExpenses)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("revenueAfterExpenses")}</p><p className="text-sm font-medium">{formatCurrency(viewingDay.revenueAfterExpenses)} {tCommon("currency")}</p></div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -176,6 +241,37 @@ function MonthlyReportTab() {
             </option>
           ))}
         </select>
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("monthly"),
+                dateRange: { from: `${year}-${String(month).padStart(2, "0")}-01`, to: `${year}-${String(month).padStart(2, "0")}-28` },
+                headers: [t("date"), t("totalOrders"), t("completedOrders"), t("sales"), t("discounts"), t("returns"), t("expenses"), t("netRevenue")],
+                rows: data.dailySales.map((day) => [
+                  new Date(day.businessDate).toLocaleDateString("ar-EG"),
+                  day.totalOrders,
+                  day.completedOrders,
+                  formatCurrency(day.totalSales),
+                  formatCurrency(day.discounts),
+                  formatCurrency(day.returns),
+                  formatCurrency(day.expenses),
+                  formatCurrency(day.revenueAfterExpenses),
+                ]),
+                totals: [
+                  { label: t("monthlySales"), value: `${formatCurrency(data.monthlyTotal)} ${tCommon("currency")}` },
+                  { label: t("monthlyExpenses"), value: `${formatCurrency(data.monthlyExpenses)} ${tCommon("currency")}` },
+                  { label: t("monthlyReturns"), value: `${formatCurrency(data.monthlyReturns)} ${tCommon("currency")}` },
+                  { label: t("netRevenue"), value: `${formatCurrency(data.netRevenue)} ${tCommon("currency")}` },
+                ],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {data && (
@@ -232,8 +328,9 @@ function MonthlyReportTab() {
 function CustomReportTab() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(getToday());
+  const [endDate, setEndDate] = useState(getToday());
+  const [viewingRow, setViewingRow] = useState<any>(null);
   const { data, isLoading } = useCustomReport(startDate || undefined, endDate || undefined);
 
   return (
@@ -253,6 +350,30 @@ function CustomReportTab() {
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("custom"),
+                dateRange: { from: startDate, to: endDate },
+                headers: [t("startDate"), t("endDate"), t("totalOrders"), t("sales"), t("returns"), t("expenses"), t("netRevenue")],
+                rows: [[
+                  new Date(data.startDate).toLocaleDateString("ar-EG"),
+                  new Date(data.endDate).toLocaleDateString("ar-EG"),
+                  data.totalOrders,
+                  formatCurrency(data.sales),
+                  formatCurrency(data.returns),
+                  formatCurrency(data.expenses),
+                  formatCurrency(data.netRevenue),
+                ]],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {isLoading && <LoadingOverlay isLoading={true} message={t("loading")} />}
@@ -277,6 +398,7 @@ function CustomReportTab() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("returns")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("expenses")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("netRevenue")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -292,6 +414,11 @@ function CustomReportTab() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.returns)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.expenses)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(data.netRevenue)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <Button variant="ghost" size="sm" onClick={() => setViewingRow(data)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -303,9 +430,24 @@ function CustomReportTab() {
         <EmptyState title={t("emptyTitle")} description={t("emptyForPeriod")} />
       )}
 
-      {(!startDate || !endDate) && (
-        <EmptyState title={t("selectPeriod")} description={t("selectPeriodDescription")} />
-      )}
+      <Dialog open={!!viewingRow} onOpenChange={(open) => { if (!open) setViewingRow(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("reportDetails")}</DialogTitle>
+          </DialogHeader>
+          {viewingRow && (
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-gray-500">{t("startDate")}</p><p className="text-sm font-medium">{new Date(viewingRow.startDate).toLocaleDateString("ar-EG")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("endDate")}</p><p className="text-sm font-medium">{new Date(viewingRow.endDate).toLocaleDateString("ar-EG")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("totalOrders")}</p><p className="text-sm font-medium">{viewingRow.totalOrders}</p></div>
+              <div><p className="text-sm text-gray-500">{t("sales")}</p><p className="text-sm font-medium">{formatCurrency(viewingRow.sales)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("returns")}</p><p className="text-sm font-medium">{formatCurrency(viewingRow.returns)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("expenses")}</p><p className="text-sm font-medium">{formatCurrency(viewingRow.expenses)} {tCommon("currency")}</p></div>
+              <div className="col-span-2"><p className="text-sm text-gray-500">{t("netRevenue")}</p><p className="text-lg font-bold">{formatCurrency(viewingRow.netRevenue)} {tCommon("currency")}</p></div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -313,8 +455,9 @@ function CustomReportTab() {
 function DeliveryReportTab() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(getToday());
+  const [endDate, setEndDate] = useState(getToday());
+  const [viewingRider, setViewingRider] = useState<any>(null);
   const { data, isLoading } = useDeliveryReport(startDate || undefined, endDate || undefined);
 
   return (
@@ -334,6 +477,26 @@ function DeliveryReportTab() {
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("delivery"),
+                dateRange: { from: startDate, to: endDate },
+                headers: [t("riderName"), t("numberOfOrders"), t("totalSales")],
+                rows: data.map((item) => [item.riderName, item.numberOfOrders, formatCurrency(item.totalSales)]),
+                totals: [
+                  { label: t("totalDeliveryOrders"), value: data.reduce((sum, d) => sum + d.numberOfOrders, 0).toString() },
+                  { label: t("totalDeliverySales"), value: `${formatCurrency(data.reduce((sum, d) => sum + d.totalSales, 0))} ${tCommon("currency")}` },
+                ],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {isLoading && <LoadingOverlay isLoading={true} message={t("loadingDelivery")} />}
@@ -352,6 +515,7 @@ function DeliveryReportTab() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("riderName")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("numberOfOrders")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("totalSales")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -360,6 +524,11 @@ function DeliveryReportTab() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.riderName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.numberOfOrders}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.totalSales)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <Button variant="ghost" size="sm" onClick={() => setViewingRider(item)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -372,9 +541,20 @@ function DeliveryReportTab() {
         <EmptyState title={t("emptyTitle")} description={t("emptyDelivery")} />
       )}
 
-      {(!startDate || !endDate) && (
-        <EmptyState title={t("selectPeriod")} description={t("selectPeriodDescription")} />
-      )}
+      <Dialog open={!!viewingRider} onOpenChange={(open) => { if (!open) setViewingRider(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("riderDetails")}</DialogTitle>
+          </DialogHeader>
+          {viewingRider && (
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-gray-500">{t("riderName")}</p><p className="text-sm font-medium">{viewingRider.riderName}</p></div>
+              <div><p className="text-sm text-gray-500">{t("numberOfOrders")}</p><p className="text-sm font-medium">{viewingRider.numberOfOrders}</p></div>
+              <div className="col-span-2"><p className="text-sm text-gray-500">{t("totalSales")}</p><p className="text-lg font-bold">{formatCurrency(viewingRider.totalSales)} {tCommon("currency")}</p></div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -382,8 +562,9 @@ function DeliveryReportTab() {
 function ExpenseReportTab() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(getToday());
+  const [endDate, setEndDate] = useState(getToday());
+  const [viewingExpense, setViewingExpense] = useState<any>(null);
   const { data, isLoading } = useExpenseReport(startDate || undefined, endDate || undefined);
 
   return (
@@ -403,6 +584,31 @@ function ExpenseReportTab() {
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("expense"),
+                dateRange: { from: startDate, to: endDate },
+                headers: [t("titleCol"), t("expenses"), t("createdBy"), t("date"), t("notes")],
+                rows: data.map((item) => [
+                  item.title,
+                  formatCurrency(item.amount),
+                  item.createdBy,
+                  new Date(item.date).toLocaleDateString("ar-EG"),
+                  item.notes || "-",
+                ]),
+                totals: [
+                  { label: t("totalExpensesReport"), value: `${formatCurrency(data.reduce((sum, e) => sum + e.amount, 0))} ${tCommon("currency")}` },
+                ],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {isLoading && <LoadingOverlay isLoading={true} message={t("loadingExpenses")} />}
@@ -423,6 +629,7 @@ function ExpenseReportTab() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("createdBy")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("date")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("notes")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -435,6 +642,11 @@ function ExpenseReportTab() {
                       {new Date(item.date).toLocaleDateString("ar-EG")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.notes || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <Button variant="ghost" size="sm" onClick={() => setViewingExpense(item)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -447,9 +659,26 @@ function ExpenseReportTab() {
         <EmptyState title={t("emptyTitle")} description={t("emptyExpenses")} />
       )}
 
-      {(!startDate || !endDate) && (
-        <EmptyState title={t("selectPeriod")} description={t("selectPeriodDescription")} />
-      )}
+      <Dialog open={!!viewingExpense} onOpenChange={(open) => { if (!open) setViewingExpense(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("expenseDetails")}</DialogTitle>
+          </DialogHeader>
+          {viewingExpense && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-sm text-gray-500">{t("titleCol")}</p><p className="text-sm font-medium">{viewingExpense.title}</p></div>
+                <div><p className="text-sm text-gray-500">{tCommon("amount")}</p><p className="text-sm font-medium">{formatCurrency(viewingExpense.amount)} {tCommon("currency")}</p></div>
+                <div><p className="text-sm text-gray-500">{t("createdBy")}</p><p className="text-sm font-medium">{viewingExpense.createdBy}</p></div>
+                <div><p className="text-sm text-gray-500">{t("date")}</p><p className="text-sm font-medium">{new Date(viewingExpense.date).toLocaleDateString("ar-EG")}</p></div>
+              </div>
+              {viewingExpense.notes && (
+                <div><p className="text-sm text-gray-500">{tCommon("notes")}</p><p className="text-sm">{viewingExpense.notes}</p></div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -457,8 +686,9 @@ function ExpenseReportTab() {
 function ReturnsReportTab() {
   const t = useTranslations("reports");
   const tCommon = useTranslations("common");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(getToday());
+  const [endDate, setEndDate] = useState(getToday());
+  const [viewingReturn, setViewingReturn] = useState<any>(null);
   const { data, isLoading } = useReturnsReport(startDate || undefined, endDate || undefined);
 
   return (
@@ -478,6 +708,31 @@ function ReturnsReportTab() {
           onChange={(e) => setEndDate(e.target.value)}
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              generateReportPdf({
+                title: t("returns"),
+                dateRange: { from: startDate, to: endDate },
+                headers: [t("totalOrders"), t("returnDate"), t("returnedProducts"), t("refundAmountCol"), t("cashierCol")],
+                rows: data.map((item) => [
+                  item.invoiceNumber,
+                  new Date(item.returnDate).toLocaleDateString("ar-EG"),
+                  item.returnedItems,
+                  formatCurrency(item.refundAmount),
+                  item.cashier,
+                ]),
+                totals: [
+                  { label: t("totalReturnsReport"), value: `${formatCurrency(data.reduce((sum, r) => sum + r.refundAmount, 0))} ${tCommon("currency")}` },
+                ],
+              })
+            }
+          >
+            PDF {tCommon("export")}
+          </Button>
+        )}
       </div>
 
       {isLoading && <LoadingOverlay isLoading={true} message={t("loadingReturns")} />}
@@ -498,6 +753,7 @@ function ReturnsReportTab() {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("returnedProducts")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("refundAmountCol")}</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("cashierCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -510,6 +766,11 @@ function ReturnsReportTab() {
                     <td className="px-6 py-4 text-sm text-gray-900">{item.returnedItems}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.refundAmount)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.cashier}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <Button variant="ghost" size="sm" onClick={() => setViewingReturn(item)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -522,9 +783,22 @@ function ReturnsReportTab() {
         <EmptyState title={t("emptyTitle")} description={t("emptyReturns")} />
       )}
 
-      {(!startDate || !endDate) && (
-        <EmptyState title={t("selectPeriod")} description={t("selectPeriodDescription")} />
-      )}
+      <Dialog open={!!viewingReturn} onOpenChange={(open) => { if (!open) setViewingReturn(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("returnDetails")}</DialogTitle>
+          </DialogHeader>
+          {viewingReturn && (
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-gray-500">{t("totalOrders")}</p><p className="text-sm font-medium">{viewingReturn.invoiceNumber}</p></div>
+              <div><p className="text-sm text-gray-500">{t("returnDate")}</p><p className="text-sm font-medium">{new Date(viewingReturn.returnDate).toLocaleDateString("ar-EG")}</p></div>
+              <div className="col-span-2"><p className="text-sm text-gray-500">{t("returnedProducts")}</p><p className="text-sm">{viewingReturn.returnedItems}</p></div>
+              <div><p className="text-sm text-gray-500">{t("refundAmountCol")}</p><p className="text-lg font-bold">{formatCurrency(viewingReturn.refundAmount)} {tCommon("currency")}</p></div>
+              <div><p className="text-sm text-gray-500">{t("cashierCol")}</p><p className="text-sm font-medium">{viewingReturn.cashier}</p></div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
