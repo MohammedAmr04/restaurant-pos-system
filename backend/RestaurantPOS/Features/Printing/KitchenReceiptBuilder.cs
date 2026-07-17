@@ -9,25 +9,32 @@ namespace RestaurantPOS.Features.Printing
         {
             return new ReceiptModel
             {
-                RestaurantName = settings.RestaurantName,
-                Phone = settings.Phone,
-                Address = settings.Address,
+                Type = ReceiptType.Kitchen,
+                RestaurantName = settings.RestaurantName ?? "مطعم ومشويات بيت المعز",
                 InvoiceNumber = order.InvoiceNumber,
+                DailyOrderNumber = ExtractDailyOrderNumber(order.InvoiceNumber),
                 OrderDate = order.CompletedAt ?? order.CreatedAt,
+                PrintedAt = DateTime.Now,
                 CashierName = order.UserName,
                 OrderType = order.OrderType,
                 TableNumber = order.TableNumber,
                 CustomerName = order.CustomerName,
-                DeliveryRiderName = order.DeliveryRiderName,
                 Items = order.Items.Select(i => new ReceiptItemModel
                 {
                     Quantity = i.Quantity,
                     Name = i.MenuItemName,
                     Notes = i.Notes,
-                    ShowPrice = false
                 }).ToList(),
-                FooterText = null
             };
+        }
+
+        private static int ExtractDailyOrderNumber(string invoiceNumber)
+        {
+            if (string.IsNullOrEmpty(invoiceNumber)) return 0;
+            var parts = invoiceNumber.Split('-');
+            if (parts.Length == 2 && int.TryParse(parts[1], out int num))
+                return num;
+            return 0;
         }
     }
 }

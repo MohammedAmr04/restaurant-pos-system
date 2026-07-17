@@ -3,13 +3,24 @@ using System.Collections.Generic;
 
 namespace RestaurantPOS.Features.Printing
 {
+    public enum ReceiptType
+    {
+        Kitchen,
+        Customer,
+        Cashier
+    }
+
     public class ReceiptModel
     {
+        public ReceiptType Type { get; set; }
         public string RestaurantName { get; set; }
         public string Phone { get; set; }
+        public string Phone2 { get; set; }
         public string Address { get; set; }
         public string InvoiceNumber { get; set; }
+        public int DailyOrderNumber { get; set; }
         public DateTime OrderDate { get; set; }
+        public DateTime PrintedAt { get; set; }
         public string CashierName { get; set; }
         public string OrderType { get; set; }
         public int? TableNumber { get; set; }
@@ -34,6 +45,5 @@ namespace RestaurantPOS.Features.Printing
         public decimal UnitPrice { get; set; }
         public decimal Total { get; set; }
         public string Notes { get; set; }
-        public bool ShowPrice { get; set; } = true;
     }
 }

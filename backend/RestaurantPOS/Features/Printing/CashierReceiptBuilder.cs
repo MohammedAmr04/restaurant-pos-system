@@ -9,10 +9,13 @@ namespace RestaurantPOS.Features.Printing
         {
             return new ReceiptModel
             {
-                RestaurantName = settings.RestaurantName,
+                Type = ReceiptType.Cashier,
+                RestaurantName = settings.RestaurantName ?? "مطعم ومشويات بيت المعز",
                 Phone = settings.Phone,
+                Phone2 = settings.Phone2,
                 Address = settings.Address,
                 InvoiceNumber = order.InvoiceNumber,
+                DailyOrderNumber = ExtractDailyOrderNumber(order.InvoiceNumber),
                 OrderDate = order.CompletedAt ?? order.CreatedAt,
                 CashierName = order.UserName,
                 OrderType = order.OrderType,
@@ -26,7 +29,6 @@ namespace RestaurantPOS.Features.Printing
                     UnitPrice = i.UnitPrice,
                     Total = i.Total,
                     Notes = i.Notes,
-                    ShowPrice = true
                 }).ToList(),
                 Subtotal = order.Subtotal,
                 Discount = order.DiscountValue,
@@ -36,8 +38,17 @@ namespace RestaurantPOS.Features.Printing
                 GrandTotal = order.GrandTotal,
                 PaidAmount = order.PaidAmount,
                 PaymentMethod = order.PaymentMethod,
-                FooterText = settings.ReceiptFooter
+                FooterText = "شكراً لزيارتكم",
             };
+        }
+
+        private static int ExtractDailyOrderNumber(string invoiceNumber)
+        {
+            if (string.IsNullOrEmpty(invoiceNumber)) return 0;
+            var parts = invoiceNumber.Split('-');
+            if (parts.Length == 2 && int.TryParse(parts[1], out int num))
+                return num;
+            return 0;
         }
     }
 }

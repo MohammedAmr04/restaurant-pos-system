@@ -8,11 +8,13 @@ namespace RestaurantPOS.Features.Printing
 {
     public class PrinterService : IPrinterService
     {
+        private const string DefaultPrinterName = "cash";
         private string _printerName;
 
         public PrinterService()
         {
-            _printerName = GetDefaultPrinter();
+            _printerName = DefaultPrinterName;
+            Log.Information("Printer initialized with default: {PrinterName}", _printerName);
         }
 
         public void ConfigurePrinter(string printerName, bool enabled)
@@ -20,12 +22,18 @@ namespace RestaurantPOS.Features.Printing
             if (!enabled)
             {
                 _printerName = null;
+                Log.Warning("Printer disabled");
                 return;
             }
             if (!string.IsNullOrEmpty(printerName))
             {
                 _printerName = printerName;
             }
+            else
+            {
+                _printerName = DefaultPrinterName;
+            }
+            Log.Information("Printer configured: {PrinterName}", _printerName);
         }
 
         public void PrintReceipt(byte[] receiptBytes, string copyName)
@@ -34,7 +42,7 @@ namespace RestaurantPOS.Features.Printing
             {
                 if (string.IsNullOrEmpty(_printerName))
                 {
-                    Log.Warning("No printer found, skipping print for {CopyName}", copyName);
+                    Log.Warning("No printer configured, skipping print for {CopyName}", copyName);
                     return;
                 }
 
@@ -49,13 +57,18 @@ namespace RestaurantPOS.Features.Printing
                         e.Graphics.DrawImage(image, rect);
                     };
 
+                    Log.Information("Sending {CopyName} to printer: {PrinterName}", copyName, _printerName);
                     printDocument.Print();
-                    Log.Information("Receipt printed: {CopyName}", copyName);
+                    Log.Information("Printed: {CopyName}", copyName);
                 }
+            }
+            catch (InvalidPrinterException ex)
+            {
+                Log.Error(ex, "Printer '{PrinterName}' not found. Available printers may differ. Copy: {CopyName}", _printerName, copyName);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to print receipt: {CopyName}", copyName);
+                Log.Error(ex, "Failed to print {CopyName} on printer '{PrinterName}': {Error}", copyName, _printerName, ex.Message);
             }
         }
 
@@ -71,30 +84,35 @@ namespace RestaurantPOS.Features.Printing
             for (int i = 0; i < copies; i++)
             {
                 var kitchenReceipt = KitchenReceiptBuilder.Build(order, settings);
-                var kitchenBytes = ReceiptRenderer.RenderToBytes(kitchenReceipt, showPrices: false);
+                var kitchenBytes = ReceiptRenderer.RenderToBytes(kitchenReceipt);
                 PrintReceipt(kitchenBytes, "Kitchen Copy");
 
-                var customerReceipt = CustomerReceiptBuilder.Build(order, settings);
-                var customerBytes = ReceiptRenderer.RenderToBytes(customerReceipt, showPrices: true);
-                PrintReceipt(customerBytes, "Customer Copy");
+                switch (order.OrderType)
+                {
+                    case "TakeAway":
+                        var customerReceipt = CustomerReceiptBuilder.Build(order, settings);
+                        var customerBytes = ReceiptRenderer.RenderToBytes(customerReceipt);
+                        PrintReceipt(customerBytes, "Customer Copy");
+                        break;
+                }
 
                 var cashierReceipt = CashierReceiptBuilder.Build(order, settings);
-                var cashierBytes = ReceiptRenderer.RenderToBytes(cashierReceipt, showPrices: true);
+                var cashierBytes = ReceiptRenderer.RenderToBytes(cashierReceipt);
                 PrintReceipt(cashierBytes, "Cashier Copy");
             }
         }
 
-        private string GetDefaultPrinter()
+        public void PrintCashierCopy(Orders.OrderDto order, Settings.SettingsDto settings)
         {
-            try
+            if (settings != null)
             {
-                return PrinterSettings.InstalledPrinters[0];
+                ConfigurePrinter(settings.PrinterName, settings.PrinterEnabled);
             }
-            catch
-            {
-                Log.Warning("No printers installed");
-                return null;
-            }
+
+            var cashierReceipt = CashierReceiptBuilder.Build(order, settings);
+            var cashierBytes = ReceiptRenderer.RenderToBytes(cashierReceipt);
+            PrintReceipt(cashierBytes, "Cashier Copy (Reprint)");
         }
+
     }
 }

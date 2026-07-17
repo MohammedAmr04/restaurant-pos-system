@@ -248,7 +248,6 @@
     <Compile Include="Features\Orders\Services\OrderService.cs" />
     <Compile Include="Features\Printing\CashierReceiptBuilder.cs" />
     <Compile Include="Features\Printing\CustomerReceiptBuilder.cs" />
-    <Compile Include="Features\Printing\EscPosEncoder.cs" />
     <Compile Include="Features\Printing\IPrinterService.cs" />
     <Compile Include="Features\Printing\KitchenReceiptBuilder.cs" />
     <Compile Include="Features\Printing\PrinterService.cs" />
