@@ -167,3 +167,4 @@ next-env.d.ts
 final .net 4.8/
 nuget.exe
 *.png
+backend/RestaurantPOS/wwwroot/
