@@ -250,7 +250,7 @@ namespace RestaurantPOS.Features.Printing
             using (var graphics = Graphics.FromImage(bitmap))
             {
                 graphics.Clear(Color.White);
-                graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+                graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
                 graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
 

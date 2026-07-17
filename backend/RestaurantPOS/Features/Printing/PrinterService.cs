@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Printing;
 using System.IO;
 using Serilog;
 
@@ -36,7 +36,7 @@ namespace RestaurantPOS.Features.Printing
             Log.Information("Printer configured: {PrinterName}", _printerName);
         }
 
-        public void PrintReceipt(byte[] receiptBytes, string copyName)
+        public void PrintReceipt(byte[] receiptPngBytes, string copyName)
         {
             try
             {
@@ -46,25 +46,24 @@ namespace RestaurantPOS.Features.Printing
                     return;
                 }
 
-                using (var stream = new MemoryStream(receiptBytes))
+                using (var stream = new MemoryStream(receiptPngBytes))
                 using (var image = Image.FromStream(stream))
+                using (var bitmap = new Bitmap(image))
                 {
-                    var printDocument = new PrintDocument();
-                    printDocument.PrinterSettings.PrinterName = _printerName;
-                    printDocument.PrintPage += (sender, e) =>
-                    {
-                        var rect = e.MarginBounds;
-                        e.Graphics.DrawImage(image, rect);
-                    };
+                    byte[] rasterBytes = ImagePrinter.GetImageBytes(bitmap);
 
-                    Log.Information("Sending {CopyName} to printer: {PrinterName}", copyName, _printerName);
-                    printDocument.Print();
-                    Log.Information("Printed: {CopyName}", copyName);
+                    List<byte> payload = new List<byte>();
+                    payload.AddRange(new byte[] { 0x1B, 0x40 });
+                    payload.AddRange(rasterBytes);
+                    payload.AddRange(new byte[] { 0x1D, 0x56, 0x42, 0x00 });
+
+                    Log.Information("Sending {CopyName} to printer: {PrinterName} ({ByteCount} bytes)", copyName, _printerName, payload.Count);
+                    bool success = RawPrinterService.PrintBytes(_printerName, payload.ToArray());
+                    if (success)
+                        Log.Information("Printed: {CopyName}", copyName);
+                    else
+                        Log.Warning("Print failed for {CopyName} on printer '{PrinterName}'", copyName, _printerName);
                 }
-            }
-            catch (InvalidPrinterException ex)
-            {
-                Log.Error(ex, "Printer '{PrinterName}' not found. Available printers may differ. Copy: {CopyName}", _printerName, copyName);
             }
             catch (Exception ex)
             {

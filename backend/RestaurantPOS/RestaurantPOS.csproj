@@ -249,8 +249,10 @@
     <Compile Include="Features\Printing\CashierReceiptBuilder.cs" />
     <Compile Include="Features\Printing\CustomerReceiptBuilder.cs" />
     <Compile Include="Features\Printing\IPrinterService.cs" />
+    <Compile Include="Features\Printing\ImagePrinter.cs" />
     <Compile Include="Features\Printing\KitchenReceiptBuilder.cs" />
     <Compile Include="Features\Printing\PrinterService.cs" />
+    <Compile Include="Features\Printing\RawPrinterService.cs" />
     <Compile Include="Features\Printing\ReceiptModels.cs" />
     <Compile Include="Features\Printing\ReceiptRenderer.cs" />
     <Compile Include="Features\Reports\Controllers\ReportsController.cs" />
