@@ -16,6 +16,7 @@ namespace RestaurantPOS.Features.Orders
         private readonly Features.DeliveryRiders.IDeliveryRiderRepository _deliveryRiderRepository;
         private readonly Features.Authentication.IUserRepository _userRepository;
         private readonly Features.Settings.ISettingsRepository _settingsRepository;
+        private readonly Features.Settings.ISettingsService _settingsService;
         private readonly Features.Printing.IPrinterService _printerService;
 
         public OrderService(
@@ -27,6 +28,7 @@ namespace RestaurantPOS.Features.Orders
             Features.DeliveryRiders.IDeliveryRiderRepository deliveryRiderRepository,
             Features.Authentication.IUserRepository userRepository,
             Features.Settings.ISettingsRepository settingsRepository,
+            Features.Settings.ISettingsService settingsService,
             Features.Printing.IPrinterService printerService)
         {
             _orderRepository = orderRepository;
@@ -37,6 +39,7 @@ namespace RestaurantPOS.Features.Orders
             _deliveryRiderRepository = deliveryRiderRepository;
             _userRepository = userRepository;
             _settingsRepository = settingsRepository;
+            _settingsService = settingsService;
             _printerService = printerService;
         }
 
@@ -288,23 +291,9 @@ namespace RestaurantPOS.Features.Orders
             try
             {
                     var completedOrder = await MapToDto(order);
-                    var settings = await _settingsRepository.GetAsync();
-                    if (settings != null)
+                    var settingsDto = await _settingsService.GetAsync();
+                    if (settingsDto != null)
                     {
-                        var settingsDto = new Features.Settings.SettingsDto
-                        {
-                            Id = settings.Id,
-                            RestaurantName = settings.RestaurantName,
-                            Phone = settings.Phone,
-                            Address = settings.Address,
-                            Logo = settings.Logo,
-                            TaxEnabled = settings.TaxEnabled,
-                            TaxPercentage = settings.TaxPercentage,
-                            ServiceChargeEnabled = settings.ServiceChargeEnabled,
-                            ServiceChargePercentage = settings.ServiceChargePercentage,
-                            ReceiptHeader = settings.ReceiptHeader,
-                            ReceiptFooter = settings.ReceiptFooter
-                        };
                         _printerService.PrintOrderReceipts(completedOrder, settingsDto);
                     }
             }
