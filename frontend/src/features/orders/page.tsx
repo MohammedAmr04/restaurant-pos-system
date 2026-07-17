@@ -302,12 +302,16 @@ export default function POSPage() {
 
   const handleCompleteOrder = async () => {
     if (!serverOrder) return;
-    await completeOrderMutation.mutateAsync({
-      orderId: serverOrder.id,
-      data: { paymentMethod, paidAmount: paidAmount || cartGrandTotal },
-    });
-    resetForm();
-    setIsPaymentOpen(false);
+    try {
+      await completeOrderMutation.mutateAsync({
+        orderId: serverOrder.id,
+        data: { paymentMethod, paidAmount: paidAmount || cartGrandTotal },
+      });
+      resetForm();
+      setIsPaymentOpen(false);
+    } catch (error: any) {
+      alert(error.message || t("completeError"));
+    }
   };
 
   const handleDeleteOrder = async () => {

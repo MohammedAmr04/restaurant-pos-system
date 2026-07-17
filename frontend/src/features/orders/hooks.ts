@@ -287,6 +287,9 @@ export function useCompleteOrder() {
         `/orders/${orderId}/complete`,
         data
       );
+      if (!response.success) {
+        throw new Error(response.message);
+      }
       return response.data;
     },
     onSuccess: (data) => {

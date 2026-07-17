@@ -238,7 +238,10 @@
     "cash": "نقدي",
     "visa": "فيزا",
     "instapay": "انستاباي",
-    "wallet": "محفظة"
+    "wallet": "محفظة",
+    "customerRequiredForComplete": "يجب اختيار العميل لإتمام طلب التيك أواي أو الديلفري",
+    "riderRequiredForComplete": "يجب اختيار السائق لإتمام طلب الديلفري",
+    "completeError": "فشل إتمام الطلب"
   },
   "pos": {
     "title": "نقطة البيع",

@@ -262,12 +262,6 @@ namespace RestaurantPOS.Features.Orders
             var items = await _orderItemRepository.GetByOrderIdAsync(orderId);
             if (!items.Any()) throw new Exception("Order has no items");
 
-            if (order.OrderType == "Delivery" && !order.DeliveryRiderId.HasValue)
-                throw new Exception("Delivery orders require a rider");
-
-            if ((order.OrderType == "TakeAway" || order.OrderType == "Delivery") && !order.CustomerId.HasValue)
-                throw new Exception("Take away and delivery orders require a customer");
-
             order.Status = "Completed";
             order.PaymentMethod = dto.PaymentMethod;
             order.PaidAmount = dto.PaidAmount;
