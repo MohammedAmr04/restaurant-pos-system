@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/client";
 import type { Order } from "@/features/orders/hooks";
 
@@ -28,6 +28,18 @@ export function useInvoices(filters: InvoiceFilters) {
       const url = `/orders/invoices${queryString ? `?${queryString}` : ""}`;
       const response = await apiClient.get<Order[]>(url);
       return response.data;
+    },
+  });
+}
+
+export function useReprintInvoice() {
+  return useMutation({
+    mutationFn: async (orderId: number) => {
+      const response = await apiClient.post(`/orders/${orderId}/reprint`);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
     },
   });
 }

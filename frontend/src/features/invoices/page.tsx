@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants/routes";
 import { ORDER_TYPE, PAYMENT_METHOD } from "@/lib/constants/order-status";
+import { useInvoices, useReprintInvoice, Order } from "./hooks";
 import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { Label } from "@/lib/components/ui/label";
@@ -24,7 +25,6 @@ import {
 } from "@/lib/components/ui/dialog";
 import { EmptyState } from "@/lib/components/ui/empty-state";
 import { LoadingOverlay } from "@/lib/components/ui/loading-overlay";
-import { useInvoices, Order } from "./hooks";
 
 function getToday() {
   return new Date().toISOString().split("T")[0];
@@ -107,72 +107,21 @@ export default function InvoicesPage() {
     dateTo: dateTo || undefined,
   });
 
-  const handlePrint = (order: Order) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+  const reprintMutation = useReprintInvoice();
 
-    printWindow.document.write(`
-      <html dir="rtl">
-      <head>
-        <title>فاتورة ${order.invoiceNumber}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; direction: rtl; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .invoice-number { font-size: 18px; font-weight: bold; }
-          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-          th { background-color: #f5f5f5; }
-          .total-row { font-weight: bold; background-color: #f0f0f0; }
-          .info { margin: 10px 0; }
-          .info span { display: block; margin: 5px 0; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="invoice-number">فاتورة رقم: ${order.invoiceNumber}</div>
-          <div>${order.createdAt ? new Date(order.createdAt).toLocaleDateString("ar-EG") : ""}</div>
-        </div>
-        <div class="info">
-          <span>النوع: ${getOrderTypeArabic(order.orderType)}</span>
-          <span>العميل: ${order.customerName || "عميل عام"}</span>
-          <span>طريقة الدفع: ${getPaymentMethodArabic(order.paymentMethod || "")}</span>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>الصنف</th>
-              <th>الكمية</th>
-              <th>السعر</th>
-              <th>الإجمالي</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${order.items
-              .map(
-                (item) => `
-              <tr>
-                <td>${item.menuItemName}</td>
-                <td>${item.quantity}</td>
-                <td>${formatCurrency(item.unitPrice)}</td>
-                <td>${formatCurrency(item.total)}</td>
-              </tr>
-            `
-              )
-              .join("")}
-          </tbody>
-        </table>
-        <div class="info">
-          <span>المجموع الفرعي: ${formatCurrency(order.subtotal)}</span>
-          ${order.discountValue > 0 ? `<span>الخصم: ${formatCurrency(order.discountValue)}</span>` : ""}
-          ${order.serviceCharge > 0 ? `<span>رسوم الخدمة: ${formatCurrency(order.serviceCharge)}</span>` : ""}
-          ${order.tax > 0 ? `<span>الضريبة: ${formatCurrency(order.tax)}</span>` : ""}
-          <span class="total-row" style="font-size: 16px; display: block; margin-top: 10px;">الإجمالي: ${formatCurrency(order.grandTotal)}</span>
-        </div>
-        <script>window.onload=function(){window.print();}</script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const handlePrint = (order: Order) => {
+    reprintMutation.mutate(order.id, {
+      onSuccess: (response) => {
+        if (response.success) {
+          alert(t("printSuccess"));
+        } else {
+          alert(response.message || t("printError"));
+        }
+      },
+      onError: (error) => {
+        alert(error.message || t("printError"));
+      },
+    });
   };
 
   if (isLoading) {
