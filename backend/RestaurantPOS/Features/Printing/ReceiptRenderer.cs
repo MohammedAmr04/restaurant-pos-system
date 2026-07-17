@@ -256,34 +256,24 @@ namespace RestaurantPOS.Features.Printing
 
                 int y = Padding;
 
-                foreach (var (line, h, _) in measuredLines)
+        foreach (var (line, h, _) in measuredLines)
+            {
+                using (var font = new Font(FontFamily, line.Size, line.Style))
                 {
-                    using (var font = new Font(FontFamily, line.Size, line.Style))
+                    var align = StringAlignment.Near;
+                    switch (line.Justify)
                     {
-                        float x;
-                        int drawWidth = contentWidth;
-
-                        var size = graphics.MeasureString(line.Text, font, contentWidth, rtlFormat);
-                        switch (line.Justify)
-                        {
-                            case Justify.Center:
-                                x = Padding + (contentWidth - size.Width) / 2;
-                                break;
-                            case Justify.Right:
-                                x = PaperWidth80mm - Padding - size.Width;
-                                break;
-                            case Justify.Left:
-                                x = Padding;
-                                break;
-                            default:
-                                x = Padding;
-                                break;
-                        }
-
-                        graphics.DrawString(line.Text, font, Brushes.Black, new RectangleF(x, y, drawWidth, h + 4), rtlFormat);
-                        y += h + 2;
+                        case Justify.Center: align = StringAlignment.Center; break;
+                        case Justify.Right:  align = StringAlignment.Near; break;
+                        case Justify.Left:   align = StringAlignment.Far; break;
                     }
+
+                    var lineFormat = new StringFormat(rtlFormat) { Alignment = align };
+                    graphics.DrawString(line.Text, font, Brushes.Black,
+                        new RectangleF(Padding, y, contentWidth, h + 4), lineFormat);
+                    y += h + 2;
                 }
+            }
             }
 
             return bitmap;
