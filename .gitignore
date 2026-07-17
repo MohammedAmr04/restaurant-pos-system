@@ -160,3 +160,10 @@ docker-compose.override.yml
 # ==========================================
 *.tsbuildinfo
 next-env.d.ts   
+
+# ==========================================
+# Deployment artifacts
+# ==========================================
+final .net 4.8/
+nuget.exe
+*.png
