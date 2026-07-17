@@ -13,11 +13,19 @@ namespace RestaurantPOS.Features.Orders.Controllers
     {
         private readonly IOrderService _orderService;
         private readonly AuditLogService _auditLogService;
+        private readonly Settings.ISettingsService _settingsService;
+        private readonly Printing.IPrinterService _printerService;
 
-        public OrdersController(IOrderService orderService, AuditLogService auditLogService)
+        public OrdersController(
+            IOrderService orderService,
+            AuditLogService auditLogService,
+            Settings.ISettingsService settingsService,
+            Printing.IPrinterService printerService)
         {
             _orderService = orderService;
             _auditLogService = auditLogService;
+            _settingsService = settingsService;
+            _printerService = printerService;
         }
 
         [HttpGet]
@@ -39,6 +47,31 @@ namespace RestaurantPOS.Features.Orders.Controllers
         {
             var orders = await _orderService.SearchInvoicesAsync(search, orderType, paymentMethod, dateFrom, dateTo);
             return Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(orders));
+        }
+
+        [HttpPost]
+        [Route("{id:int}/reprint")]
+        public async Task<IHttpActionResult> Reprint(int id)
+        {
+            try
+            {
+                var order = await _orderService.GetByIdAsync(id);
+                if (order == null)
+                {
+                    return Ok(ApiResponse.Fail("Order not found"));
+                }
+
+                var settings = await _settingsService.GetAsync();
+                _printerService.PrintCashierCopy(order, settings);
+
+                var userId = AuthHelper.GetCurrentUserId();
+                await _auditLogService.LogAsync(userId, "Reprint", "Order", order.Id, $"Reprinted invoice: {order.InvoiceNumber}");
+                return Ok(ApiResponse.Ok("Invoice reprinted successfully"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(ApiResponse.Fail(ex.Message));
+            }
         }
 
         [HttpGet]
