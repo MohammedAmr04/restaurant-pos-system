@@ -22,7 +22,7 @@ namespace RestaurantPOS.Features.Settings
         public async Task<bool> UpdateAsync(Settings settings)
         {
             var sql = @"UPDATE Settings 
-                       SET RestaurantName = @RestaurantName, Phone = @Phone, Address = @Address, Logo = @Logo, 
+                       SET RestaurantName = @RestaurantName, Phone = @Phone, Phone2 = @Phone2, Address = @Address, Logo = @Logo, 
                            TaxEnabled = @TaxEnabled, TaxPercentage = @TaxPercentage, 
                            ServiceChargeEnabled = @ServiceChargeEnabled, ServiceChargePercentage = @ServiceChargePercentage, 
                            ReceiptHeader = @ReceiptHeader, ReceiptFooter = @ReceiptFooter,

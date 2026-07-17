@@ -6,6 +6,7 @@ namespace RestaurantPOS.Features.Settings
     {
         public string RestaurantName { get; set; }
         public string Phone { get; set; }
+        public string Phone2 { get; set; }
         public string Address { get; set; }
         public string Logo { get; set; }
         public bool TaxEnabled { get; set; }

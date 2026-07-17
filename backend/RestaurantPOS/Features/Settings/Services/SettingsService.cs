@@ -29,6 +29,7 @@ namespace RestaurantPOS.Features.Settings
 
             settings.RestaurantName = dto.RestaurantName;
             settings.Phone = dto.Phone;
+            settings.Phone2 = dto.Phone2;
             settings.Address = dto.Address;
             settings.Logo = dto.Logo;
             settings.TaxEnabled = dto.TaxEnabled;
@@ -55,6 +56,7 @@ namespace RestaurantPOS.Features.Settings
                 Id = settings.Id,
                 RestaurantName = settings.RestaurantName,
                 Phone = settings.Phone,
+                Phone2 = settings.Phone2,
                 Address = settings.Address,
                 Logo = settings.Logo,
                 TaxEnabled = settings.TaxEnabled,
