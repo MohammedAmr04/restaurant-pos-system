@@ -29,6 +29,19 @@ namespace RestaurantPOS.Features.Orders.Controllers
         }
 
         [HttpGet]
+        [Route("invoices")]
+        public async Task<IHttpActionResult> SearchInvoices(
+            [FromUri] string search = null,
+            [FromUri] string orderType = null,
+            [FromUri] string paymentMethod = null,
+            [FromUri] DateTime? dateFrom = null,
+            [FromUri] DateTime? dateTo = null)
+        {
+            var orders = await _orderService.SearchInvoicesAsync(search, orderType, paymentMethod, dateFrom, dateTo);
+            return Ok(ApiResponse<IEnumerable<OrderDto>>.Ok(orders));
+        }
+
+        [HttpGet]
         [Route("{id:int}")]
         public async Task<IHttpActionResult> GetById(int id)
         {

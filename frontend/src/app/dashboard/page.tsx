@@ -18,6 +18,7 @@ import {
   Settings,
   ClipboardList,
   LogOut,
+  FileText,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -52,6 +53,7 @@ export default function DashboardPage() {
     { name: tNav("customers"), icon: Users, route: ROUTES.CUSTOMERS },
     { name: tNav("deliveryRiders"), icon: Bike, route: ROUTES.DELIVERY_RIDERS },
     { name: tNav("returns"), icon: RotateCcw, route: ROUTES.RETURNS },
+    { name: tNav("invoices"), icon: FileText, route: ROUTES.INVOICES },
     { name: tNav("expenses"), icon: Receipt, route: ROUTES.EXPENSES },
     { name: tNav("reports"), icon: BarChart3, route: ROUTES.REPORTS },
     { name: tNav("settings"), icon: Settings, route: ROUTES.SETTINGS },

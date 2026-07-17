@@ -330,6 +330,19 @@ namespace RestaurantPOS.Features.Orders
             return result;
         }
 
+        public async Task<IEnumerable<OrderDto>> SearchInvoicesAsync(string search, string orderType, string paymentMethod, DateTime? dateFrom, DateTime? dateTo)
+        {
+            var orders = await _orderRepository.SearchInvoicesAsync(search, orderType, paymentMethod, dateFrom, dateTo);
+            var result = new List<OrderDto>();
+
+            foreach (var order in orders)
+            {
+                result.Add(await MapToDto(order));
+            }
+
+            return result;
+        }
+
         public async Task<OrderDto> ResumeOrderAsync(int orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);

@@ -18,6 +18,7 @@ namespace RestaurantPOS.Features.Orders
         Task<OrderDto> RemoveServiceChargeAsync(int orderId);
         Task<OrderDto> CompleteOrderAsync(int orderId, CompleteOrderDto dto);
         Task<IEnumerable<OrderDto>> GetHoldOrdersAsync();
+        Task<IEnumerable<OrderDto>> SearchInvoicesAsync(string search, string orderType, string paymentMethod, DateTime? dateFrom, DateTime? dateTo);
         Task<OrderDto> ResumeOrderAsync(int orderId);
         Task<bool> DeleteOrderAsync(int orderId);
     }

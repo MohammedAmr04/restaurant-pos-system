@@ -8,6 +8,7 @@ export const ROUTES = {
   CUSTOMERS: "/customers",
   DELIVERY_RIDERS: "/delivery-riders",
   ORDERS: "/orders",
+  INVOICES: "/invoices",
   RETURNS: "/returns",
   EXPENSES: "/expenses",
   REPORTS: "/reports",

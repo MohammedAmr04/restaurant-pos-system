@@ -34,6 +34,42 @@ namespace RestaurantPOS.Features.Orders
             return await _connection.QueryAsync<Order>(sql, new { Status = status });
         }
 
+        public async Task<IEnumerable<Order>> SearchInvoicesAsync(string search, string orderType, string paymentMethod, DateTime? dateFrom, DateTime? dateTo)
+        {
+            var sql = @"SELECT * FROM Orders 
+                        WHERE DeletedAt IS NULL AND Status IN ('Completed', 'Returned')";
+            var parameters = new DynamicParameters();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                sql += " AND (InvoiceNumber LIKE @Search OR CustomerId IN (SELECT Id FROM Customers WHERE Phone LIKE @Search OR Name LIKE @Search))";
+                parameters.Add("Search", $"%{search}%");
+            }
+            if (!string.IsNullOrWhiteSpace(orderType))
+            {
+                sql += " AND OrderType = @OrderType";
+                parameters.Add("OrderType", orderType);
+            }
+            if (!string.IsNullOrWhiteSpace(paymentMethod))
+            {
+                sql += " AND PaymentMethod = @PaymentMethod";
+                parameters.Add("PaymentMethod", paymentMethod);
+            }
+            if (dateFrom.HasValue)
+            {
+                sql += " AND BusinessDate >= @DateFrom";
+                parameters.Add("DateFrom", dateFrom.Value.ToString("yyyy-MM-dd"));
+            }
+            if (dateTo.HasValue)
+            {
+                sql += " AND BusinessDate <= @DateTo";
+                parameters.Add("DateTo", dateTo.Value.ToString("yyyy-MM-dd 23:59:59"));
+            }
+
+            sql += " ORDER BY CreatedAt DESC";
+            return await _connection.QueryAsync<Order>(sql, parameters);
+        }
+
         public async Task<int> CreateAsync(Order order)
         {
             var sql = @"INSERT INTO Orders (InvoiceNumber, OrderType, Status, UserId, CustomerId, TableId, DeliveryRiderId, 
