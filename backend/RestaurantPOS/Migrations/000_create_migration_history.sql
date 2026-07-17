@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS __MigrationHistory (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    MigrationName TEXT NOT NULL UNIQUE,
+    AppliedAt TEXT NOT NULL
+);

@@ -8,6 +8,29 @@ namespace RestaurantPOS.Shared
 {
     public static class DatabaseMigration
     {
+        private static readonly string[] Migrations = new[]
+        {
+            "Migrations/001_create_users.sql",
+            "Migrations/002_create_categories.sql",
+            "Migrations/003_create_menu_items.sql",
+            "Migrations/004_create_restaurant_tables.sql",
+            "Migrations/005_create_customers.sql",
+            "Migrations/006_create_delivery_riders.sql",
+            "Migrations/007_create_orders.sql",
+            "Migrations/008_create_order_items.sql",
+            "Migrations/009_create_returns.sql",
+            "Migrations/010_create_return_items.sql",
+            "Migrations/011_create_expenses.sql",
+            "Migrations/012_create_audit_logs.sql",
+            "Migrations/013_create_settings.sql",
+            "Migrations/014_seed_data.sql",
+            "Migrations/015_create_daily_closings.sql",
+            "Migrations/016_add_printer_settings.sql",
+            "Migrations/017_add_category_image.sql",
+            "Migrations/018_update_default_printer.sql",
+            "Migrations/019_add_phone2.sql",
+        };
+
         public static void RunMigrations()
         {
             var connectionString = "Data Source=restaurant-pos.db;Version=3;";
@@ -16,26 +39,49 @@ namespace RestaurantPOS.Shared
             {
                 connection.Open();
 
-                RunSqlFile(connection, "Migrations/001_create_users.sql");
-                RunSqlFile(connection, "Migrations/002_create_categories.sql");
-                RunSqlFile(connection, "Migrations/003_create_menu_items.sql");
-                RunSqlFile(connection, "Migrations/004_create_restaurant_tables.sql");
-                RunSqlFile(connection, "Migrations/005_create_customers.sql");
-                RunSqlFile(connection, "Migrations/006_create_delivery_riders.sql");
-                RunSqlFile(connection, "Migrations/007_create_orders.sql");
-                RunSqlFile(connection, "Migrations/008_create_order_items.sql");
-                RunSqlFile(connection, "Migrations/009_create_returns.sql");
-                RunSqlFile(connection, "Migrations/010_create_return_items.sql");
-                RunSqlFile(connection, "Migrations/011_create_expenses.sql");
-                RunSqlFile(connection, "Migrations/012_create_audit_logs.sql");
-                RunSqlFile(connection, "Migrations/013_create_settings.sql");
-                RunSqlFile(connection, "Migrations/014_seed_data.sql");
-                RunSqlFile(connection, "Migrations/015_create_daily_closings.sql");
-                RunSqlFile(connection, "Migrations/016_add_printer_settings.sql");
-                RunSqlFile(connection, "Migrations/017_add_category_image.sql");
+                RunSqlFile(connection, "Migrations/000_create_migration_history.sql");
+                SeedExistingMigrations(connection);
+
+                foreach (var migration in Migrations)
+                {
+                    if (!IsApplied(connection, migration))
+                    {
+                        RunSqlFile(connection, migration);
+                        RecordApplied(connection, migration);
+                    }
+                }
 
                 Log.Information("Database migrations completed successfully");
             }
+        }
+
+        private static void SeedExistingMigrations(SQLiteConnection connection)
+        {
+            var count = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM __MigrationHistory");
+            if (count > 0) return;
+
+            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            foreach (var migration in Migrations)
+            {
+                connection.Execute(
+                    "INSERT OR IGNORE INTO __MigrationHistory (MigrationName, AppliedAt) VALUES (@Name, @AppliedAt)",
+                    new { Name = migration, AppliedAt = now });
+            }
+            Log.Information("Seeded migration history for {Count} existing migrations", Migrations.Length);
+        }
+
+        private static bool IsApplied(SQLiteConnection connection, string migrationName)
+        {
+            return connection.ExecuteScalar<int>(
+                "SELECT COUNT(*) FROM __MigrationHistory WHERE MigrationName = @Name",
+                new { Name = migrationName }) > 0;
+        }
+
+        private static void RecordApplied(SQLiteConnection connection, string migrationName)
+        {
+            connection.Execute(
+                "INSERT INTO __MigrationHistory (MigrationName, AppliedAt) VALUES (@Name, @AppliedAt)",
+                new { Name = migrationName, AppliedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
         }
 
         private static void RunSqlFile(SQLiteConnection connection, string filePath)
@@ -68,7 +114,7 @@ namespace RestaurantPOS.Shared
                 }
             }
 
-            Log.Information("Migration completed: {FilePath}", filePath);
+            Log.Information("Migration executed: {FilePath}", filePath);
         }
     }
 }
