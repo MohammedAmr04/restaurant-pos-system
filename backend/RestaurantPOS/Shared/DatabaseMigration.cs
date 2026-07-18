@@ -61,6 +61,14 @@ namespace RestaurantPOS.Shared
             var count = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM __MigrationHistory");
             if (count > 0) return;
 
+            var tablesExist = connection.ExecuteScalar<int>(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Users'") > 0;
+            if (!tablesExist)
+            {
+                Log.Information("Fresh database detected — will run all migrations");
+                return;
+            }
+
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             foreach (var migration in Migrations)
             {
@@ -68,7 +76,7 @@ namespace RestaurantPOS.Shared
                     "INSERT OR IGNORE INTO __MigrationHistory (MigrationName, AppliedAt) VALUES (@Name, @AppliedAt)",
                     new { Name = migration, AppliedAt = now });
             }
-            Log.Information("Seeded migration history for {Count} existing migrations", Migrations.Length);
+            Log.Information("Seeded migration history for {Count} existing migrations (pre-existing database)", Migrations.Length);
         }
 
         private static bool IsApplied(SQLiteConnection connection, string migrationName)

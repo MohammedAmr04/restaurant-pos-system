@@ -11,8 +11,42 @@ namespace RestaurantPOS.Features.Printing
     public static class ReceiptRenderer
     {
         private const int PaperWidth80mm = 576;
-        private const int Padding = 16;
+        private const int Margin = 15;
         private const string FontFamily = "Tahoma";
+
+        // Typography hierarchy
+        private const float RestaurantNameSize = 28;
+        private const float ReceiptTitleSize = 20;
+        private const float InvoiceInfoSize = 16;
+        private const float ItemSize = 16;
+        private const float TotalsSize = 18;
+        private const float GrandTotalSize = 22;
+        private const float FooterSize = 14;
+
+        // Spacing
+        private const int SectionGapLarge = 20;
+        private const int SectionGapMedium = 15;
+        private const int LineSpacing = 5;
+        private const int SeparatorPadding = 10;
+
+        private static readonly StringFormat RtlFormat = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            FormatFlags = StringFormatFlags.DirectionRightToLeft | StringFormatFlags.LineLimit,
+            Trimming = StringTrimming.Word,
+        };
+
+        private static readonly StringFormat LtrFormat = new StringFormat
+        {
+            Alignment = StringAlignment.Far,
+            LineAlignment = StringAlignment.Near,
+        };
+
+        private static readonly StringFormat CenterFormat = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Near,
+        };
 
         public static byte[] RenderToBytes(ReceiptModel receipt)
         {
@@ -41,249 +75,332 @@ namespace RestaurantPOS.Features.Printing
 
         private static Bitmap RenderKitchenReceipt(ReceiptModel receipt)
         {
-            var lines = new List<RenderLine>();
-            var contentWidth = PaperWidth80mm - (Padding * 2);
+            int contentWidth = PaperWidth80mm - (Margin * 2);
+            var canvas = new Bitmap(PaperWidth80mm, 4000);
 
-            // Restaurant Name (centered, bold)
-            lines.Add(new RenderLine(receipt.RestaurantName, 14, FontStyle.Bold, Justify.Center));
-
-            // "المطبخ" header (centered, bold, underlined)
-            lines.Add(new RenderLine("المطبخ", 16, FontStyle.Bold, Justify.Center));
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Date & Time
-            var arabicDay = GetArabicDayName(receipt.OrderDate);
-            lines.Add(new RenderLine($"التاريخ: {receipt.OrderDate:yyyy/MM/dd}  {arabicDay}", 10, FontStyle.Regular, Justify.Right));
-            lines.Add(new RenderLine($"الوقت: {receipt.OrderDate:hh:mm tt}", 10, FontStyle.Regular, Justify.Right));
-
-            // Order info
-            lines.Add(new RenderLine($"نوع الطلب: {MapOrderType(receipt.OrderType)}", 10, FontStyle.Regular, Justify.Right));
-
-            if (receipt.DailyOrderNumber > 0)
-                lines.Add(new RenderLine($"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", 10, FontStyle.Bold, Justify.Right));
-
-            if (!string.IsNullOrEmpty(receipt.CustomerName))
-                lines.Add(new RenderLine($"العميل: {receipt.CustomerName}", 10, FontStyle.Regular, Justify.Right));
-
-            if (receipt.TableNumber.HasValue)
-                lines.Add(new RenderLine($"الطاولة: {receipt.TableNumber}", 10, FontStyle.Regular, Justify.Right));
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Items (no prices)
-            foreach (var item in receipt.Items)
+            using (var g = Graphics.FromImage(canvas))
             {
-                var qtyName = $"{item.Quantity} x {item.Name}";
-                lines.Add(new RenderLine(qtyName, 11, FontStyle.Bold, Justify.Right));
+                g.Clear(Color.White);
+                g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
 
-                if (!string.IsNullOrEmpty(item.Notes))
-                    lines.Add(new RenderLine($"  ملاحظات: {item.Notes}", 9, FontStyle.Regular, Justify.Right));
+                int y = Margin;
+
+                // Restaurant Name
+                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Receipt Title
+                y = DrawText(g, "المطبخ", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Date & Time
+                var arabicDay = GetArabicDayName(receipt.OrderDate);
+                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}  {arabicDay}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                // Order Type
+                y = DrawText(g, $"نوع الطلب: {MapOrderType(receipt.OrderType)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                // Order Number
+                if (receipt.DailyOrderNumber > 0)
+                    y = DrawText(g, $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                // Customer
+                if (!string.IsNullOrEmpty(receipt.CustomerName))
+                    y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                // Table
+                if (receipt.TableNumber.HasValue)
+                    y = DrawText(g, $"الطاولة: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Items
+                foreach (var item in receipt.Items)
+                {
+                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                    if (!string.IsNullOrEmpty(item.Notes))
+                        y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                }
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Printed At
+                y = DrawText(g, $"تاريخ الطباعة: {receipt.PrintedAt:yyyy/MM/dd hh:mm tt}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                // Cashier
+                if (!string.IsNullOrEmpty(receipt.CashierName))
+                    y = DrawText(g, $"الكاشير: {receipt.CashierName}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                y += Margin;
+
+                return CropBitmap(canvas, y);
             }
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // PrintedAt + Cashier
-            lines.Add(new RenderLine($"تاريخ الطباعة: {receipt.PrintedAt:yyyy/MM/dd hh:mm tt}", 9, FontStyle.Regular, Justify.Right));
-            if (!string.IsNullOrEmpty(receipt.CashierName))
-                lines.Add(new RenderLine($"الكاشير: {receipt.CashierName}", 9, FontStyle.Regular, Justify.Right));
-
-            return RenderLinesToBitmap(lines, contentWidth);
         }
 
         private static Bitmap RenderCustomerReceipt(ReceiptModel receipt)
         {
-            var lines = new List<RenderLine>();
-            var contentWidth = PaperWidth80mm - (Padding * 2);
+            int contentWidth = PaperWidth80mm - (Margin * 2);
+            var canvas = new Bitmap(PaperWidth80mm, 4000);
 
-            // Restaurant Name (centered, bold)
-            lines.Add(new RenderLine(receipt.RestaurantName, 14, FontStyle.Bold, Justify.Center));
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Date & Time + Order number
-            lines.Add(new RenderLine($"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", 10, FontStyle.Regular, Justify.Right));
-            lines.Add(new RenderLine($"الوقت: {receipt.OrderDate:hh:mm tt}", 10, FontStyle.Regular, Justify.Right));
-
-            if (receipt.DailyOrderNumber > 0)
-                lines.Add(new RenderLine($"رقم الطلب: {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", 10, FontStyle.Bold, Justify.Right));
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Items (no prices, no totals, no payment)
-            foreach (var item in receipt.Items)
+            using (var g = Graphics.FromImage(canvas))
             {
-                var qtyName = $"{item.Quantity} x {item.Name}";
-                lines.Add(new RenderLine(qtyName, 11, FontStyle.Regular, Justify.Right));
+                g.Clear(Color.White);
+                g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+
+                int y = Margin;
+
+                // Restaurant Name
+                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Date & Time
+                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                // Order Number
+                if (receipt.DailyOrderNumber > 0)
+                    y = DrawText(g, $"رقم الطلب: {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Items
+                foreach (var item in receipt.Items)
+                {
+                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                }
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                y += Margin;
+
+                return CropBitmap(canvas, y);
             }
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            return RenderLinesToBitmap(lines, contentWidth);
         }
 
         private static Bitmap RenderCashierReceipt(ReceiptModel receipt)
         {
-            var lines = new List<RenderLine>();
-            var contentWidth = PaperWidth80mm - (Padding * 2);
+            int contentWidth = PaperWidth80mm - (Margin * 2);
+            var canvas = new Bitmap(PaperWidth80mm, 4000);
 
-            // Restaurant Name (centered, bold)
-            lines.Add(new RenderLine(receipt.RestaurantName, 14, FontStyle.Bold, Justify.Center));
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Invoice & Daily Order
-            if (!string.IsNullOrEmpty(receipt.InvoiceNumber))
-                lines.Add(new RenderLine($"رقم الفاتورة: {receipt.InvoiceNumber}", 10, FontStyle.Bold, Justify.Right));
-
-            if (receipt.DailyOrderNumber > 0)
-                lines.Add(new RenderLine($"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", 10, FontStyle.Bold, Justify.Right));
-
-            // Date & Time
-            lines.Add(new RenderLine($"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", 10, FontStyle.Regular, Justify.Right));
-            lines.Add(new RenderLine($"الوقت: {receipt.OrderDate:hh:mm tt}", 10, FontStyle.Regular, Justify.Right));
-
-            // Order Type
-            lines.Add(new RenderLine($"نوع الطلب: {MapOrderType(receipt.OrderType)}", 10, FontStyle.Regular, Justify.Right));
-
-            // Cashier
-            if (!string.IsNullOrEmpty(receipt.CashierName))
-                lines.Add(new RenderLine($"الكاشير: {receipt.CashierName}", 10, FontStyle.Regular, Justify.Right));
-
-            // Customer
-            if (!string.IsNullOrEmpty(receipt.CustomerName))
-                lines.Add(new RenderLine($"العميل: {receipt.CustomerName}", 10, FontStyle.Regular, Justify.Right));
-
-            // Delivery Rider
-            if (!string.IsNullOrEmpty(receipt.DeliveryRiderName))
-                lines.Add(new RenderLine($"السائق: {receipt.DeliveryRiderName}", 10, FontStyle.Regular, Justify.Right));
-
-            if (receipt.TableNumber.HasValue)
-                lines.Add(new RenderLine($"الطاولة: {receipt.TableNumber}", 10, FontStyle.Regular, Justify.Right));
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Items with prices
-            foreach (var item in receipt.Items)
+            using (var g = Graphics.FromImage(canvas))
             {
-                lines.Add(new RenderLine($"{item.Quantity} x {item.Name}", 11, FontStyle.Bold, Justify.Right));
-                lines.Add(new RenderLine($"  {item.UnitPrice:F2} x {item.Quantity} = {item.Total:F2}", 9, FontStyle.Regular, Justify.Right));
+                g.Clear(Color.White);
+                g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
 
-                if (!string.IsNullOrEmpty(item.Notes))
-                    lines.Add(new RenderLine($"  ملاحظات: {item.Notes}", 9, FontStyle.Regular, Justify.Right));
+                int y = Margin;
+
+                // ── Restaurant Name ──
+                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Receipt Title ──
+                y = DrawText(g, "فاتورة الكاشير", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Invoice Info ──
+                if (!string.IsNullOrEmpty(receipt.InvoiceNumber))
+                    y = DrawText(g, $"رقم الفاتورة: {receipt.InvoiceNumber}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                if (receipt.DailyOrderNumber > 0)
+                    y = DrawText(g, $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"نوع الطلب: {MapOrderType(receipt.OrderType)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.CashierName))
+                    y = DrawText(g, $"الكاشير: {receipt.CashierName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.CustomerName))
+                    y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.DeliveryRiderName))
+                    y = DrawText(g, $"السائق: {receipt.DeliveryRiderName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                if (receipt.TableNumber.HasValue)
+                    y = DrawText(g, $"الطاولة: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Items (two-column layout) ──
+                foreach (var item in receipt.Items)
+                {
+                    string rightText = $"{item.Quantity} x {item.Name}";
+                    string leftText = $"{item.Total:F2}";
+                    y = DrawItemLine(g, rightText, leftText, ItemSize, y, contentWidth);
+
+                    if (!string.IsNullOrEmpty(item.Notes))
+                        y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                }
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Totals ──
+                y = DrawText(g, $"المجموع الفرعي: {receipt.Subtotal:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                if (receipt.Discount > 0)
+                {
+                    var discountLabel = receipt.DiscountType == "Percentage"
+                        ? $"الخصم ({receipt.Discount}%): "
+                        : $"الخصم: {receipt.Discount:F2}";
+                    y = DrawText(g, discountLabel, TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                }
+
+                if (receipt.ServiceCharge > 0)
+                    y = DrawText(g, $"رسوم الخدمة: {receipt.ServiceCharge:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                if (receipt.Tax > 0)
+                    y = DrawText(g, $"الضريبة: {receipt.Tax:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Grand Total ──
+                y = DrawText(g, $"الإجمالي: {receipt.GrandTotal:F2}", GrandTotalSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Payment Method ──
+                y = DrawText(g, $"طريقة الدفع: {MapPaymentMethod(receipt.PaymentMethod)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // ── Footer ──
+                if (!string.IsNullOrEmpty(receipt.Address))
+                    y = DrawText(g, receipt.Address, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.Phone))
+                    y = DrawText(g, receipt.Phone, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.Phone2))
+                    y = DrawText(g, receipt.Phone2, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.FooterText))
+                    y = DrawText(g, receipt.FooterText, FooterSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+
+                y += Margin;
+
+                return CropBitmap(canvas, y);
             }
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Subtotal
-            lines.Add(new RenderLine($"المجموع الفرعي: {receipt.Subtotal:F2}", 10, FontStyle.Regular, Justify.Right));
-
-            // Discount
-            if (receipt.Discount > 0)
-            {
-                var discountLabel = receipt.DiscountType == "Percentage"
-                    ? $"الخصم ({receipt.Discount}%): "
-                    : $"الخصم: {receipt.Discount:F2}";
-                lines.Add(new RenderLine(discountLabel, 10, FontStyle.Regular, Justify.Right));
-            }
-
-            // Service Charge
-            if (receipt.ServiceCharge > 0)
-                lines.Add(new RenderLine($"رسوم الخدمة: {receipt.ServiceCharge:F2}", 10, FontStyle.Regular, Justify.Right));
-
-            // Tax
-            if (receipt.Tax > 0)
-                lines.Add(new RenderLine($"الضريبة: {receipt.Tax:F2}", 10, FontStyle.Regular, Justify.Right));
-
-            // Grand Total (most prominent - 16pt Bold)
-            lines.Add(new RenderLine($"الإجمالي: {receipt.GrandTotal:F2}", 16, FontStyle.Bold, Justify.Right));
-
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-
-            // Payment Method
-            lines.Add(new RenderLine($"طريقة الدفع: {MapPaymentMethod(receipt.PaymentMethod)}", 10, FontStyle.Regular, Justify.Right));
-
-            // Footer
-            lines.Add(new RenderLine(Separator(contentWidth), 8, FontStyle.Regular, Justify.Center));
-            if (!string.IsNullOrEmpty(receipt.Address))
-                lines.Add(new RenderLine(receipt.Address, 9, FontStyle.Regular, Justify.Center));
-
-            if (!string.IsNullOrEmpty(receipt.Phone))
-                lines.Add(new RenderLine(receipt.Phone, 9, FontStyle.Regular, Justify.Center));
-            if (!string.IsNullOrEmpty(receipt.Phone2))
-                lines.Add(new RenderLine(receipt.Phone2, 9, FontStyle.Regular, Justify.Center));
-
-            if (!string.IsNullOrEmpty(receipt.FooterText))
-                lines.Add(new RenderLine(receipt.FooterText, 10, FontStyle.Bold, Justify.Center));
-
-            return RenderLinesToBitmap(lines, contentWidth);
         }
 
-        private static Bitmap RenderLinesToBitmap(List<RenderLine> lines, int contentWidth)
+        // ── Drawing helpers ──
+
+        private static int DrawText(Graphics g, string text, float fontSize, FontStyle style, Justify justify, int y, int contentWidth)
         {
-            var rtlFormat = new StringFormat
+            using (var font = new Font(FontFamily, fontSize, style))
             {
-                Alignment = StringAlignment.Near,
-                FormatFlags = StringFormatFlags.DirectionRightToLeft | StringFormatFlags.LineLimit,
-                Trimming = StringTrimming.Word,
-            };
-
-            int totalHeight = Padding;
-            var measuredLines = new List<(RenderLine line, int height, int wrappedHeight)>();
-
-            using (var measureBmp = new Bitmap(1, 1))
-            using (var g = Graphics.FromImage(measureBmp))
-            {
-                foreach (var line in lines)
+                var align = StringAlignment.Near;
+                switch (justify)
                 {
-                    using (var font = new Font(FontFamily, line.Size, line.Style))
-                    {
-                        var rect = new RectangleF(0, 0, contentWidth, 10000);
-                        var size = g.MeasureString(line.Text, font, contentWidth, rtlFormat);
-                        var h = (int)Math.Ceiling(size.Height);
-                        measuredLines.Add((line, h, h));
-                        totalHeight += h + 2;
-                    }
+                    case Justify.Center: align = StringAlignment.Center; break;
+                    case Justify.Right: align = StringAlignment.Near; break;
+                    case Justify.Left: align = StringAlignment.Far; break;
+                }
+
+                var format = new StringFormat(RtlFormat) { Alignment = align };
+                var size = g.MeasureString(text, font, contentWidth, RtlFormat);
+                int h = (int)Math.Ceiling(size.Height);
+
+                g.DrawString(text, font, Brushes.Black,
+                    new RectangleF(Margin, y, contentWidth, h + 4), format);
+
+                return y + h + LineSpacing;
+            }
+        }
+
+        private static int DrawItemLine(Graphics g, string rightRtlText, string leftLtrText, float fontSize, int y, int contentWidth)
+        {
+            using (var font = new Font(FontFamily, fontSize, FontStyle.Regular))
+            {
+                var rightSize = g.MeasureString(rightRtlText, font, contentWidth, RtlFormat);
+                var leftSize = g.MeasureString(leftLtrText, font, contentWidth, LtrFormat);
+
+                int rightWidth = (int)Math.Ceiling(rightSize.Width);
+                int leftWidth = (int)Math.Ceiling(leftSize.Width);
+
+                if (rightWidth + leftWidth + 10 <= contentWidth)
+                {
+                    // Draw right text (RTL) from right edge
+                    g.DrawString(rightRtlText, font, Brushes.Black,
+                        new RectangleF(Margin, y, contentWidth, rightSize.Height + 4), RtlFormat);
+
+                    // Draw left text (LTR) from left edge
+                    g.DrawString(leftLtrText, font, Brushes.Black,
+                        new RectangleF(Margin, y, contentWidth, leftSize.Height + 4), LtrFormat);
+
+                    return y + (int)Math.Max(rightSize.Height, leftSize.Height) + LineSpacing;
+                }
+                else
+                {
+                    // Fallback: stack vertically
+                    int y1 = DrawText(g, rightRtlText, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    return DrawText(g, leftLtrText, fontSize, FontStyle.Regular, Justify.Left, y1, contentWidth);
                 }
             }
-
-            totalHeight += Padding;
-
-            var bitmap = new Bitmap(PaperWidth80mm, totalHeight);
-            using (var graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-                graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-
-                int y = Padding;
-
-        foreach (var (line, h, _) in measuredLines)
-            {
-                using (var font = new Font(FontFamily, line.Size, line.Style))
-                {
-                    var align = StringAlignment.Near;
-                    switch (line.Justify)
-                    {
-                        case Justify.Center: align = StringAlignment.Center; break;
-                        case Justify.Right:  align = StringAlignment.Near; break;
-                        case Justify.Left:   align = StringAlignment.Far; break;
-                    }
-
-                    var lineFormat = new StringFormat(rtlFormat) { Alignment = align };
-                    graphics.DrawString(line.Text, font, Brushes.Black,
-                        new RectangleF(Padding, y, contentWidth, h + 4), lineFormat);
-                    y += h + 2;
-                }
-            }
-            }
-
-            return bitmap;
         }
 
-        private static string Separator(int width)
+        private static int DrawSeparator(Graphics g, int y, int contentWidth)
         {
-            int dashCount = width / 8;
-            return new string('-', dashCount);
+            y += SeparatorPadding;
+            g.DrawLine(Pens.Black, Margin, y, PaperWidth80mm - Margin, y);
+            return y + SeparatorPadding;
         }
+
+        private static Bitmap CropBitmap(Bitmap source, int usedHeight)
+        {
+            var cropped = new Bitmap(PaperWidth80mm, usedHeight);
+            using (var g = Graphics.FromImage(cropped))
+            {
+                g.DrawImage(source, new Rectangle(0, 0, PaperWidth80mm, usedHeight),
+                                  new Rectangle(0, 0, PaperWidth80mm, usedHeight), GraphicsUnit.Pixel);
+            }
+            source.Dispose();
+            return cropped;
+        }
+
+        // ── Text helpers ──
 
         private static string MapOrderType(string orderType)
         {
@@ -338,21 +455,5 @@ namespace RestaurantPOS.Features.Printing
         }
 
         private enum Justify { Left, Center, Right }
-
-        private class RenderLine
-        {
-            public string Text { get; }
-            public float Size { get; }
-            public FontStyle Style { get; }
-            public Justify Justify { get; }
-
-            public RenderLine(string text, float size, FontStyle style, Justify justify)
-            {
-                Text = text;
-                Size = size;
-                Style = style;
-                Justify = justify;
-            }
-        }
     }
 }

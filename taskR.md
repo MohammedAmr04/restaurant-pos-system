@@ -1,131 +1,380 @@
-# PDF & Invoice Printing Improvements
+# Receipt Layout & Typography Improvements
 
-Version: 1.0
+The current printing functionality works correctly.
 
-Status: Approved
+Do NOT modify the printing pipeline.
 
----
+Do NOT modify PrinterService.
 
-# Objective
+Do NOT modify receipt generation flow.
 
-Improve PDF generation and invoice reprinting to provide a production-ready experience.
-
----
-
-# 1. Arabic PDF Support
-
-## Current Issue
-
-Exported PDF reports do not correctly render Arabic text.
-
-Arabic characters appear as:
-
-- Broken
-- Disconnected
-- Garbled
-- Squares
-- Question marks
-
-This is unacceptable.
+Only improve the visual layout of the receipts.
 
 ---
 
-## Expected Behavior
+## Objective
 
-All exported PDFs must fully support Arabic.
+Match the visual appearance of the previous POS project.
+
+The previous project had much better typography, spacing and readability.
+
+Use it only as a visual reference.
+
+Do not copy code directly.
+
+---
+
+# 1. Restaurant Name
+
+The restaurant name should be the largest text on the receipt.
 
 Requirements:
 
-- Correct RTL layout.
-- Proper Arabic glyph shaping.
-- Embedded Arabic font.
-- Right-aligned Arabic text.
-- Arabic table headers.
-- Arabic report titles.
-- Arabic totals.
+- Bold
+- Larger font size
+- Center aligned
+- Clearly separated from the rest of the receipt
 
-Every generated report must be readable when opened on another computer without requiring additional fonts.
+Restaurant Name:
 
----
+مطعم ومشويات بيت المعز
 
-## Applies To
-
-Arabic support is mandatory for every exported report:
-
-- Daily Sales
-- Monthly Sales
-- Custom Period
-- Delivery
-- Expenses
-- Returns
-- Order Invoices
+It should visually act as the receipt title.
 
 ---
 
-# 2. Invoice Reprint Behavior
+# 2. Typography
 
-## Current Behavior
+Increase the overall font sizes to match the previous project.
 
-When clicking Print from the Order Invoices page, the system prints the invoice directly without respecting the restaurant printing workflow.
+Use a clear visual hierarchy.
 
----
+Suggested hierarchy:
 
-## Expected Behavior
+Restaurant Name
+Largest + Bold
 
-The Order Invoices page should reuse the exact same printing pipeline used when completing a new order.
+Section Titles
+Large + Bold
 
-The reprint process must behave exactly like the original print process.
+Invoice Information
+Medium
 
----
+Items
+Normal
 
-## Customer Copy
+Totals
+Large + Bold
 
-Clicking "Print" from the Order Invoices page should print only:
+Grand Total
+Largest after the restaurant name
 
-Customer Copy
-
-The system should not print:
-
-- Kitchen Copy
-- Cashier Copy
-
-Those copies are only required during the initial order completion.
-
-A historical reprint is intended for the customer only.
+The receipt should be easy to read from a distance.
 
 ---
 
-## Printing Pipeline
+# 3. Spacing
 
-The implementation should reuse the existing receipt generation service.
+Increase vertical spacing between sections.
 
-The invoice must preserve:
+Examples:
 
-- Invoice Number
-- Items
-- Quantities
-- Unit Prices
-- Discount
-- Service Charge
-- Grand Total
-- Payment Method
-- Date & Time
+Restaurant Name
 
-The reprinted invoice should be visually identical to the original Customer Copy.
+↓
 
-Do not create a separate receipt layout for reprints.
+Receipt Type
 
-Reuse the existing ReceiptBuilder and PrinterService.
+↓
+
+Invoice Information
+
+↓
+
+Items
+
+↓
+
+Totals
+
+↓
+
+Footer
+
+Avoid a crowded layout.
 
 ---
 
-# Acceptance Criteria
+# 4. Cashier Receipt Item Alignment
 
-The implementation is complete when:
+The current item layout is not visually aligned.
 
-- All exported PDFs correctly display Arabic text.
-- Arabic fonts are embedded in exported PDFs.
-- RTL layout is preserved.
-- Clicking Print from Order Invoices prints only the Customer Copy.
-- The existing receipt generation pipeline is reused.
-- The reprinted receipt matches the original customer receipt.
+Fix the items table.
+
+Expected layout:
+
+Quantity
+
+↓
+
+Item Name
+
+↓
+
+Unit Price
+
+↓
+
+Line Total
+
+Columns should stay aligned regardless of item name length.
+
+Long item names should wrap correctly without breaking the layout.
+
+Arabic RTL alignment must remain correct.
+
+Numbers should remain LTR where appropriate.
+
+---
+
+# 5. RTL Improvements
+
+Review the cashier receipt.
+
+Ensure:
+
+- Arabic text is RTL.
+- Numeric values remain aligned correctly.
+- Prices line up vertically.
+- Quantities line up vertically.
+- Totals line up vertically.
+
+Avoid mixed RTL/LTR rendering issues.
+
+---
+
+# 6. Totals Section
+
+The totals area should stand out visually.
+
+Increase spacing before totals.
+
+Grand Total should:
+
+- Use bold font.
+- Use a larger font.
+- Be visually separated by horizontal lines.
+
+---
+
+# 7. Receipt Width
+
+Keep compatibility with 80mm thermal printers.
+
+Do not change the printer width.
+
+Instead improve the internal layout to better utilize the available width.
+
+---
+
+# 8. Visual Consistency
+
+Ensure all receipt types use the same typography rules.
+
+This includes:
+
+- Kitchen Receipt
+- Cashier Receipt
+- Customer Receipt
+
+Each receipt should have consistent spacing and font hierarchy while keeping only the information relevant to that receipt.
+
+---
+
+# 9. Preserve Existing Functionality
+
+Do NOT modify:
+
+- Printing pipeline
+- ESC/POS communication
+- PrinterService
+- Receipt routing
+- Receipt selection
+- Business logic
+
+Only improve presentation and layout.
+
+---
+
+## Deliverables
+
+After implementation provide:
+
+- List of modified files.
+- Summary of typography improvements.
+- Summary of layout improvements.
+- Confirmation that printing functionality remains unchanged.
+
+# 10. Typography
+
+Improve the receipt typography to match the previous POS project.
+
+Use the following typography hierarchy as a reference.
+
+Restaurant Name
+
+- Font Family: Tahoma
+- Font Size: 28
+- Font Weight: Bold
+- Center Aligned
+
+Receipt Title
+
+Examples:
+
+- فاتورة الكاشير
+- المطبخ
+- طلب العميل
+
+- Font Family: Tahoma
+- Font Size: 20
+- Font Weight: Bold
+- Center Aligned
+
+Invoice Information
+
+Examples:
+
+- رقم الطلب
+- التاريخ
+- الوقت
+- نوع الطلب
+- الكاشير
+- العميل
+
+- Font Family: Tahoma
+- Font Size: 16
+- Font Weight: Bold
+
+Items
+
+Examples:
+
+- الكمية
+- الصنف
+- السعر
+- الإجمالي
+
+- Font Family: Tahoma
+- Font Size: 16
+- Font Weight: Regular
+
+Totals
+
+Examples:
+
+- الإجمالي الفرعي
+- الخصم
+- الخدمة
+
+- Font Family: Tahoma
+- Font Size: 18
+- Font Weight: Bold
+
+Grand Total
+
+The final amount should be the second largest text on the receipt.
+
+- Font Family: Tahoma
+- Font Size: 22
+- Font Weight: Bold
+
+Footer
+
+Examples:
+
+- شكراً لزيارتكم
+- أرقام الهاتف
+- العنوان
+
+- Font Family: Tahoma
+- Font Size: 14
+- Font Weight: Regular
+
+---
+
+## Spacing
+
+Increase spacing between all major sections.
+
+Recommended spacing:
+
+Restaurant Name
+
+↓
+
+20px
+
+↓
+
+Receipt Title
+
+↓
+
+20px
+
+↓
+
+Invoice Information
+
+↓
+
+15px
+
+↓
+
+Items Table
+
+↓
+
+15px
+
+↓
+
+Totals
+
+↓
+
+20px
+
+↓
+
+Footer
+
+Add horizontal separator lines between sections.
+
+Avoid crowded layouts.
+
+---
+
+## Visual Hierarchy
+
+The receipt should naturally draw attention in this order:
+
+1. Restaurant Name
+2. Grand Total (Cashier Receipt only)
+3. Receipt Type
+4. Invoice Information
+5. Items
+6. Totals
+7. Footer
+
+---
+
+## Important
+
+Do not hardcode these values if a typography configuration already exists.
+
+If reusable font definitions are available, update them instead so all receipt types automatically share the same typography.
+
+Maintain full compatibility with 80mm thermal printers.
