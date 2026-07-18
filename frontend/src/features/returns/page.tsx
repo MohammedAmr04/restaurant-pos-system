@@ -27,6 +27,7 @@ import {
   CreateReturnDto,
 } from "./hooks";
 import { useOrders, Order } from "@/features/orders/hooks";
+import { toast } from "sonner";
 import { createReturnSchema, CreateReturnFormData } from "./validation";
 
 export default function ReturnsPage() {
@@ -99,6 +100,7 @@ export default function ReturnsPage() {
       items: data.items,
     };
     await createMutation.mutateAsync(dto);
+    toast.success(t("returnSuccess"));
     setIsCreateOpen(false);
     setSelectedOrder(null);
     setOrderSearch("");

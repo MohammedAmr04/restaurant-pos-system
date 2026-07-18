@@ -22,7 +22,6 @@ export default function LoginPage() {
 
     try {
       await login(username, password);
-      router.push(ROUTES.DASHBOARD);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("loginError"));
     } finally {

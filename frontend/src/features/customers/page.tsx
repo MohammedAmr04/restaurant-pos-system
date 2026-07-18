@@ -21,6 +21,7 @@ import {
   useDeleteCustomer,
   Customer,
 } from "./hooks";
+import { toast } from "sonner";
 import { customerSchema, CustomerFormData } from "./validation";
 
 export default function CustomersPage() {
@@ -61,6 +62,7 @@ export default function CustomersPage() {
 
   const handleCreate = async (data: CustomerFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -68,6 +70,7 @@ export default function CustomersPage() {
   const handleEdit = async (data: CustomerFormData) => {
     if (editingCustomer) {
       await updateMutation.mutateAsync({ id: editingCustomer.id, data });
+      toast.success(t("updateSuccess"));
       setEditingCustomer(null);
       reset();
     }
@@ -76,6 +79,7 @@ export default function CustomersPage() {
   const handleDelete = async () => {
     if (deletingCustomer) {
       await deleteMutation.mutateAsync(deletingCustomer.id);
+      toast.success(t("deleteSuccess"));
       setDeletingCustomer(null);
     }
   };

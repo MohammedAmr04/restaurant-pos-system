@@ -24,6 +24,7 @@ import {
   useToggleAvailability,
   MenuItem,
 } from "./hooks";
+import { toast } from "sonner";
 import { menuItemSchema, MenuItemFormData } from "./validation";
 
 export default function MenuItemsPage() {
@@ -63,6 +64,7 @@ export default function MenuItemsPage() {
 
   const handleCreate = async (data: MenuItemFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -70,6 +72,7 @@ export default function MenuItemsPage() {
   const handleEdit = async (data: MenuItemFormData) => {
     if (editingItem) {
       await updateMutation.mutateAsync({ id: editingItem.id, data });
+      toast.success(t("updateSuccess"));
       setEditingItem(null);
       reset();
     }
@@ -78,6 +81,7 @@ export default function MenuItemsPage() {
   const handleDelete = async () => {
     if (deletingItem) {
       await deleteMutation.mutateAsync(deletingItem.id);
+      toast.success(t("deleteSuccess"));
       setDeletingItem(null);
     }
   };
@@ -256,7 +260,7 @@ export default function MenuItemsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>{tCommon("image") || "الصورة"}</Label>
+              <Label>{tCommon("image")}</Label>
               <AppImageUpload
                 value={watch("image")}
                 onChange={(url) => setValue("image", url ?? "", { shouldValidate: true })}
@@ -338,7 +342,7 @@ export default function MenuItemsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>{tCommon("image") || "الصورة"}</Label>
+              <Label>{tCommon("image")}</Label>
               <AppImageUpload
                 value={watch("image")}
                 onChange={(url) => setValue("image", url ?? "", { shouldValidate: true })}

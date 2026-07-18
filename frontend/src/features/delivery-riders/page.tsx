@@ -26,6 +26,7 @@ import {
   useDeleteDeliveryRider,
   DeliveryRider,
 } from "./hooks";
+import { toast } from "sonner";
 import { deliveryRiderSchema, DeliveryRiderFormData } from "./validation";
 
 export default function DeliveryRidersPage() {
@@ -58,6 +59,7 @@ export default function DeliveryRidersPage() {
 
   const handleCreate = async (data: DeliveryRiderFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -65,6 +67,7 @@ export default function DeliveryRidersPage() {
   const handleEdit = async (data: DeliveryRiderFormData) => {
     if (editingRider) {
       await updateMutation.mutateAsync({ id: editingRider.id, data });
+      toast.success(t("updateSuccess"));
       setEditingRider(null);
       reset();
     }
@@ -73,6 +76,7 @@ export default function DeliveryRidersPage() {
   const handleDelete = async () => {
     if (deletingRider) {
       await deleteMutation.mutateAsync(deletingRider.id);
+      toast.success(t("deleteSuccess"));
       setDeletingRider(null);
     }
   };

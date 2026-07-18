@@ -53,7 +53,12 @@
     "imageUploadInvalidType": "نوع الملف غير مدعوم",
     "imageUploadMaxSize": "حجم الملف يجب أن يكون أقل من 2 ميجا",
     "imageUploadFailed": "فشل تحميل الصورة",
-    "image": "الصورة"
+    "image": "الصورة",
+    "add": "إضافة",
+    "actionSuccess": "تمت العملية بنجاح",
+    "actionError": "حدث خطأ أثناء العملية",
+    "confirmDelete": "هل أنت متأكد من الحذف؟",
+    "networkError": "تعذر الاتصال بالخادم"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -322,7 +327,10 @@
     "instapay": "انستاباي",
     "wallet": "محفظة",
     "printSuccess": "تم إعادة طباعة الفاتورة بنجاح",
-    "printError": "حدث خطأ أثناء إعادة الطباعة"
+    "printError": "حدث خطأ أثناء إعادة الطباعة",
+    "statusCompleted": "مكتمل",
+    "statusReturned": "مرجع",
+    "generalCustomer": "عميل عام"
   },
   "expenses": {
     "title": "المصروفات",

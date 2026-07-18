@@ -21,6 +21,7 @@ import {
   useDeleteTable,
   Table,
 } from "./hooks";
+import { toast } from "sonner";
 import { tableSchema, TableFormData } from "./validation";
 
 export default function TablesPage() {
@@ -51,6 +52,7 @@ export default function TablesPage() {
 
   const handleCreate = async (data: TableFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -58,6 +60,7 @@ export default function TablesPage() {
   const handleEdit = async (data: TableFormData) => {
     if (editingTable) {
       await updateMutation.mutateAsync({ id: editingTable.id, data });
+      toast.success(t("updateSuccess"));
       setEditingTable(null);
       reset();
     }
@@ -66,6 +69,7 @@ export default function TablesPage() {
   const handleDelete = async () => {
     if (deletingTable) {
       await deleteMutation.mutateAsync(deletingTable.id);
+      toast.success(t("deleteSuccess"));
       setDeletingTable(null);
     }
   };

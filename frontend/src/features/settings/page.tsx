@@ -14,6 +14,7 @@ import { Textarea } from "@/lib/components/ui/textarea";
 import { Switch } from "@/lib/components/ui/switch";
 import { LoadingOverlay } from "@/lib/components/ui/loading-overlay";
 import { useSettings, useUpdateSettings } from "./hooks";
+import { toast } from "sonner";
 import { settingsSchema, SettingsFormData } from "./validation";
 
 export default function SettingsPage() {
@@ -69,6 +70,7 @@ export default function SettingsPage() {
 
   const onSubmit = async (data: SettingsFormData) => {
     await updateMutation.mutateAsync(data);
+    toast.success(t("saveSuccess"));
   };
 
   if (isLoading) {
@@ -224,18 +226,6 @@ export default function SettingsPage() {
               {tCommon("save")}
             </Button>
           </div>
-
-          {updateMutation.isSuccess && (
-            <div className="rounded-md bg-green-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">
-                    {t("saveSuccess")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
         </form>
       </main>
     </div>

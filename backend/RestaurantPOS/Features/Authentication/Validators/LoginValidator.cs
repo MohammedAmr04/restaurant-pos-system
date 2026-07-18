@@ -7,12 +7,12 @@ namespace RestaurantPOS.Features.Authentication
         public LoginValidator()
         {
             RuleFor(x => x.Username)
-                .NotEmpty().WithMessage("Username is required")
-                .MaximumLength(50).WithMessage("Username must not exceed 50 characters");
+                .NotEmpty().WithMessage("اسم المستخدم مطلوب")
+                .MaximumLength(50).WithMessage("اسم المستخدم يجب ألا يتجاوز 50 حرفاً");
 
             RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required")
-                .MinimumLength(4).WithMessage("Password must be at least 4 characters");
+                .NotEmpty().WithMessage("كلمة المرور مطلوبة")
+                .MinimumLength(4).WithMessage("كلمة المرور يجب أن تكون 4 أحرف على الأقل");
         }
     }
 }

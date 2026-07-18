@@ -27,6 +27,7 @@ import {
   useDeleteExpense,
   Expense,
 } from "./hooks";
+import { toast } from "sonner";
 import { expenseSchema, ExpenseFormData } from "./validation";
 
 export default function ExpensesPage() {
@@ -59,6 +60,7 @@ export default function ExpensesPage() {
 
   const handleCreate = async (data: ExpenseFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -66,6 +68,7 @@ export default function ExpensesPage() {
   const handleEdit = async (data: ExpenseFormData) => {
     if (editingExpense) {
       await updateMutation.mutateAsync({ id: editingExpense.id, data });
+      toast.success(t("updateSuccess"));
       setEditingExpense(null);
       reset();
     }
@@ -74,6 +77,7 @@ export default function ExpensesPage() {
   const handleDelete = async () => {
     if (deletingExpense) {
       await deleteMutation.mutateAsync(deletingExpense.id);
+      toast.success(t("deleteSuccess"));
       setDeletingExpense(null);
     }
   };

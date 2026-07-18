@@ -44,6 +44,7 @@ import {
   Order,
 } from "./hooks";
 import type { MenuItem } from "@/features/menu-items/hooks";
+import { toast } from "sonner";
 import type { CartItem } from "./types";
 import { OrderPanel } from "./components/OrderPanel";
 import { MenuPanel } from "./components/MenuPanel";
@@ -307,10 +308,11 @@ export default function POSPage() {
         orderId: serverOrder.id,
         data: { paymentMethod, paidAmount: paidAmount || cartGrandTotal },
       });
+      toast.success(tCommon("success"));
       resetForm();
       setIsPaymentOpen(false);
     } catch (error: any) {
-      alert(error.message || t("completeError"));
+      toast.error(error.message || t("completeError"));
     }
   };
 

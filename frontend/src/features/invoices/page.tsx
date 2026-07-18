@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   ArrowRight,
   Search,
@@ -48,40 +49,40 @@ function getStatusColor(status: string) {
   }
 }
 
-function getStatusArabic(status: string) {
+function getStatusLabel(status: string, t: ReturnType<typeof useTranslations>) {
   switch (status) {
     case "Completed":
-      return "مكتمل";
+      return t("statusCompleted");
     case "Returned":
-      return "مرجع";
+      return t("statusReturned");
     default:
       return status;
   }
 }
 
-function getOrderTypeArabic(type: string) {
+function getOrderTypeLabel(type: string, t: ReturnType<typeof useTranslations>) {
   switch (type) {
     case "DineIn":
-      return "صالة";
+      return t("dineIn");
     case "TakeAway":
-      return "تيك أواي";
+      return t("takeAway");
     case "Delivery":
-      return "ديلفري";
+      return t("delivery");
     default:
       return type;
   }
 }
 
-function getPaymentMethodArabic(method: string) {
+function getPaymentMethodLabel(method: string, t: ReturnType<typeof useTranslations>) {
   switch (method) {
     case "Cash":
-      return "نقدي";
+      return t("cash");
     case "Visa":
-      return "فيزا";
+      return t("visa");
     case "Instapay":
-      return "انستاباي";
+      return t("instapay");
     case "Wallet":
-      return "محفظة";
+      return t("wallet");
     default:
       return method || "-";
   }
@@ -113,13 +114,13 @@ export default function InvoicesPage() {
     reprintMutation.mutate(order.id, {
       onSuccess: (response) => {
         if (response.success) {
-          alert(t("printSuccess"));
+          toast.success(t("printSuccess"));
         } else {
-          alert(response.message || t("printError"));
+          toast.error(response.message || t("printError"));
         }
       },
-      onError: (error) => {
-        alert(error.message || t("printError"));
+      onError: () => {
+        toast.error(t("printError"));
       },
     });
   };
@@ -239,17 +240,17 @@ export default function InvoicesPage() {
                       {invoice.customerName || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {getOrderTypeArabic(invoice.orderType)}
+                      {getOrderTypeLabel(invoice.orderType, t)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {getPaymentMethodArabic(invoice.paymentMethod || "")}
+                      {getPaymentMethodLabel(invoice.paymentMethod || "", t)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                       {formatCurrency(invoice.grandTotal)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(invoice.status)}`}>
-                        {getStatusArabic(invoice.status)}
+                        {getStatusLabel(invoice.status, t)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -310,20 +311,20 @@ export default function InvoicesPage() {
                 <div>
                   <p className="text-sm text-gray-500">{t("status")}</p>
                   <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(viewingInvoice.status)}`}>
-                    {getStatusArabic(viewingInvoice.status)}
+                    {getStatusLabel(viewingInvoice.status, t)}
                   </span>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{t("customer")}</p>
-                  <p className="text-sm font-medium">{viewingInvoice.customerName || "عميل عام"}</p>
+                  <p className="text-sm font-medium">{viewingInvoice.customerName || t("generalCustomer")}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{t("orderTypeCol")}</p>
-                  <p className="text-sm font-medium">{getOrderTypeArabic(viewingInvoice.orderType)}</p>
+                  <p className="text-sm font-medium">{getOrderTypeLabel(viewingInvoice.orderType, t)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{t("paymentMethodCol")}</p>
-                  <p className="text-sm font-medium">{getPaymentMethodArabic(viewingInvoice.paymentMethod || "")}</p>
+                  <p className="text-sm font-medium">{getPaymentMethodLabel(viewingInvoice.paymentMethod || "", t)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">{t("date")}</p>

@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.data.user);
       router.push(ROUTES.DASHBOARD);
     } else {
-      throw new Error(response.message || "Login failed");
+      throw new Error(response.message || "اسم المستخدم أو كلمة المرور غير صحيحة");
     }
   };
 

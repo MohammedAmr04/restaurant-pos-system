@@ -14,6 +14,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import { EmptyState } from "@/lib/components/ui/empty-state";
 import { LoadingOverlay } from "@/lib/components/ui/loading-overlay";
 import { useDailyClosingSummary, useDailyClosingHistory, useCreateDailyClosing, DailyClosing } from "./hooks";
+import { toast } from "sonner";
 import { dailyClosingSchema, DailyClosingFormData } from "./validation";
 
 export default function DailyClosingPage() {
@@ -47,6 +48,7 @@ export default function DailyClosingPage() {
 
   const handleCreateClosing = async (data: DailyClosingFormData) => {
     await createClosingMutation.mutateAsync(data);
+    toast.success(tCommon("success"));
     setIsClosingOpen(false);
     reset();
   };

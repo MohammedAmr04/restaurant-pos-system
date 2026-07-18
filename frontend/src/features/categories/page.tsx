@@ -27,6 +27,7 @@ import {
   useDeleteCategory,
   Category,
 } from "./hooks";
+import { toast } from "sonner";
 import { categorySchema, CategoryFormData } from "./validation";
 
 export default function CategoriesPage() {
@@ -61,6 +62,7 @@ export default function CategoriesPage() {
 
   const handleCreate = async (data: CategoryFormData) => {
     await createMutation.mutateAsync(data);
+    toast.success(t("createSuccess"));
     setIsCreateOpen(false);
     reset();
   };
@@ -68,6 +70,7 @@ export default function CategoriesPage() {
   const handleEdit = async (data: CategoryFormData) => {
     if (editingCategory) {
       await updateMutation.mutateAsync({ id: editingCategory.id, data });
+      toast.success(t("updateSuccess"));
       setEditingCategory(null);
       reset();
     }
@@ -76,6 +79,7 @@ export default function CategoriesPage() {
   const handleDelete = async () => {
     if (deletingCategory) {
       await deleteMutation.mutateAsync(deletingCategory.id);
+      toast.success(t("deleteSuccess"));
       setDeletingCategory(null);
     }
   };

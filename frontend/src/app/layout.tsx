@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/providers";
 import { TranslationsProvider } from "@/providers/translations-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "نظام نقطة بيع المطعم",
@@ -17,7 +18,21 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body className="antialiased">
         <TranslationsProvider>
-          <Providers>{children}</Providers>
+          <Providers>
+            {children}
+            <Toaster
+              position="top-center"
+              dir="rtl"
+              richColors
+              closeButton
+              duration={3000}
+              toastOptions={{
+                style: {
+                  fontFamily: "inherit",
+                },
+              }}
+            />
+          </Providers>
         </TranslationsProvider>
       </body>
     </html>

@@ -25,7 +25,7 @@ namespace RestaurantPOS.Features.Authentication.Controllers
         {
             if (request == null)
             {
-                return BadRequest("Request body is required");
+                return BadRequest("طلب تسجيل الدخول مطلوب");
             }
 
             var validator = new LoginValidator();
@@ -45,7 +45,7 @@ namespace RestaurantPOS.Features.Authentication.Controllers
 
             if (result == null)
             {
-                return Ok(ApiResponse.Fail("Invalid username or password"));
+                return Ok(ApiResponse.Fail("اسم المستخدم أو كلمة المرور غير صحيحة"));
             }
 
             await _auditLogService.LogAsync(result.User.Id, "Login", "User", result.User.Id, $"User {result.User.Username} logged in");
