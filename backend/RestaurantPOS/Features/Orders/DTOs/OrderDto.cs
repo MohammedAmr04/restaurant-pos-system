@@ -13,6 +13,8 @@ namespace RestaurantPOS.Features.Orders
         public string UserName { get; set; }
         public int? CustomerId { get; set; }
         public string CustomerName { get; set; }
+        public string CustomerAddress { get; set; }
+        public string CustomerPhone { get; set; }
         public int? TableId { get; set; }
         public int? TableNumber { get; set; }
         public int? DeliveryRiderId { get; set; }

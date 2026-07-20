@@ -243,6 +243,12 @@ namespace RestaurantPOS.Features.Printing
                 if (!string.IsNullOrEmpty(receipt.CustomerName))
                     y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
 
+                if (!string.IsNullOrEmpty(receipt.CustomerPhone))
+                    y = DrawText(g, $"هاتف العميل: {receipt.CustomerPhone}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+
+                if (!string.IsNullOrEmpty(receipt.CustomerAddress))
+                    y = DrawText(g, $"عنوان العميل: {receipt.CustomerAddress}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+
                 if (!string.IsNullOrEmpty(receipt.DeliveryRiderName))
                     y = DrawText(g, $"السائق: {receipt.DeliveryRiderName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
 
@@ -254,12 +260,12 @@ namespace RestaurantPOS.Features.Printing
                 // Separator
                 y = DrawSeparator(g, y, contentWidth);
 
-                // ── Items (two-column layout) ──
+                // ── Items ──
                 foreach (var item in receipt.Items)
                 {
-                    string rightText = $"{item.Quantity} x {item.Name}";
-                    string leftText = $"{item.Total:F2}";
-                    y = DrawItemLine(g, rightText, leftText, ItemSize, y, contentWidth);
+                    string itemText = $"{item.Quantity} x {item.Name}";
+                    string priceText = $"{item.Total:F2}";
+                    y = DrawDottedLine(g, itemText, priceText, ItemSize, y, contentWidth);
 
                     if (!string.IsNullOrEmpty(item.Notes))
                         y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
@@ -285,7 +291,7 @@ namespace RestaurantPOS.Features.Printing
                     y = DrawText(g, $"رسوم الخدمة: {receipt.ServiceCharge:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
 
                 if (receipt.Tax > 0)
-                    y = DrawText(g, $"الضريبة: {receipt.Tax:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawItemLine(g, "الضريبة:", $"{receipt.Tax:F2}", TotalsSize, y, contentWidth);
 
                 y += SectionGapMedium;
 
@@ -318,6 +324,9 @@ namespace RestaurantPOS.Features.Printing
 
                 if (!string.IsNullOrEmpty(receipt.FooterText))
                     y = DrawText(g, receipt.FooterText, FooterSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+
+                y = DrawText(g, "Software by brazilyy", FooterSize - 2, FontStyle.Regular, Justify.Center, y, contentWidth);
+                y = DrawText(g, "01101352017", FooterSize - 4, FontStyle.Regular, Justify.Center, y, contentWidth);
 
                 y += Margin;
 
@@ -386,6 +395,24 @@ namespace RestaurantPOS.Features.Printing
             y += SeparatorPadding;
             g.DrawLine(Pens.Black, Margin, y, PaperWidth80mm - Margin, y);
             return y + SeparatorPadding;
+        }
+
+        private static int DrawDottedLine(Graphics g, string leftText, string rightText, float fontSize, int y, int contentWidth)
+        {
+            using (var font = new Font(FontFamily, fontSize, FontStyle.Regular))
+            {
+                var leftSize = g.MeasureString(leftText, font, contentWidth, RtlFormat);
+                var rightSize = g.MeasureString(rightText, font, contentWidth, RtlFormat);
+                var dotSize = g.MeasureString("...", font, contentWidth, RtlFormat);
+
+                float usedWidth = leftSize.Width + rightSize.Width;
+                float gap = contentWidth - usedWidth;
+                int dotPairs = Math.Max(1, (int)(gap / dotSize.Width));
+
+                string line = leftText + new string('.', dotPairs * 2) + rightText;
+                y = DrawText(g, line, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                return y;
+            }
         }
 
         private static Bitmap CropBitmap(Bitmap source, int usedHeight)

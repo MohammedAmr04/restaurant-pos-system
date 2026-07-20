@@ -21,6 +21,8 @@ namespace RestaurantPOS.Features.Printing
                 OrderType = order.OrderType,
                 TableNumber = order.TableNumber,
                 CustomerName = order.CustomerName,
+                CustomerAddress = order.CustomerAddress,
+                CustomerPhone = order.CustomerPhone,
                 DeliveryRiderName = order.DeliveryRiderName,
                 Items = order.Items.Select(i => new ReceiptItemModel
                 {

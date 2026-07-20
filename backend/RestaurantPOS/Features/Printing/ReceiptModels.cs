@@ -25,6 +25,8 @@ namespace RestaurantPOS.Features.Printing
         public string OrderType { get; set; }
         public int? TableNumber { get; set; }
         public string CustomerName { get; set; }
+        public string CustomerAddress { get; set; }
+        public string CustomerPhone { get; set; }
         public string DeliveryRiderName { get; set; }
         public List<ReceiptItemModel> Items { get; set; }
         public decimal Subtotal { get; set; }

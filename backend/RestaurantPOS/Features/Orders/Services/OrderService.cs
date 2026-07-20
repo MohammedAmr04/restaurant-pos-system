@@ -420,10 +420,14 @@ namespace RestaurantPOS.Features.Orders
             }
 
             string customerName = null;
+            string customerAddress = null;
+            string customerPhone = null;
             if (order.CustomerId.HasValue)
             {
                 var customer = await _customerRepository.GetByIdAsync(order.CustomerId.Value);
                 customerName = customer?.Name;
+                customerAddress = customer?.Address;
+                customerPhone = customer?.Phone;
             }
 
             int? tableNumber = null;
@@ -450,6 +454,8 @@ namespace RestaurantPOS.Features.Orders
                 UserName = userName,
                 CustomerId = order.CustomerId,
                 CustomerName = customerName,
+                CustomerAddress = customerAddress,
+                CustomerPhone = customerPhone,
                 TableId = order.TableId,
                 TableNumber = tableNumber,
                 DeliveryRiderId = order.DeliveryRiderId,

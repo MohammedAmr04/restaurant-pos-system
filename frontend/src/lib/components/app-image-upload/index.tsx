@@ -81,7 +81,7 @@ export function AppImageUpload({
   if (value) {
     return (
       <div className={className}>
-        <div className="relative group w-full h-48 rounded-lg border overflow-hidden">
+        <div className="relative group w-full h-32 rounded-lg border overflow-hidden">
           <img
             src={value}
             alt=""
@@ -129,21 +129,21 @@ export function AppImageUpload({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={`
-          w-full h-48 rounded-lg border-2 border-dashed cursor-pointer
-          flex flex-col items-center justify-center gap-2 transition-colors
+          w-full h-28 rounded-lg border-2 border-dashed cursor-pointer
+          flex flex-col items-center justify-center gap-1 transition-colors
           ${isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"}
           ${isUploading ? "pointer-events-none opacity-50" : ""}
         `}
       >
         {isUploading ? (
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
         ) : (
           <>
-            <ImageIcon className="h-10 w-10 text-muted-foreground/40" />
-            <span className="text-sm text-muted-foreground">
+            <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+            <span className="text-xs text-muted-foreground">
               {t("imageUploadDragDrop")}
             </span>
-            <span className="text-xs text-muted-foreground/60">
+            <span className="text-[10px] text-muted-foreground/60">
               {t("imageUploadFormats")}
             </span>
           </>

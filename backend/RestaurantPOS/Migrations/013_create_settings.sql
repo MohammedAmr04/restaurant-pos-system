@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS Settings (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     RestaurantName TEXT NOT NULL DEFAULT 'Restaurant',
     Phone TEXT,
+    Phone2 TEXT,
     Address TEXT,
     Logo TEXT,
     TaxEnabled INTEGER NOT NULL DEFAULT 0,

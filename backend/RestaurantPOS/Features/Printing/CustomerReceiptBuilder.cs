@@ -16,6 +16,8 @@ namespace RestaurantPOS.Features.Printing
                 OrderDate = order.CompletedAt ?? order.CreatedAt,
                 OrderType = order.OrderType,
                 CustomerName = order.CustomerName,
+                CustomerAddress = order.CustomerAddress,
+                CustomerPhone = order.CustomerPhone,
                 Items = order.Items.Select(i => new ReceiptItemModel
                 {
                     Quantity = i.Quantity,
