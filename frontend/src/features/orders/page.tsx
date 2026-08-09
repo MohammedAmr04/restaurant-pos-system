@@ -45,7 +45,7 @@ import {
 } from "./hooks";
 import type { MenuItem } from "@/features/menu-items/hooks";
 import { toast } from "sonner";
-import type { CartItem } from "./types";
+import type { CartItem, FoodType } from "./types";
 import { OrderPanel } from "./components/OrderPanel";
 import { MenuPanel } from "./components/MenuPanel";
 import { AddCustomerDialog } from "./components/AddCustomerDialog";
@@ -56,6 +56,7 @@ export default function POSPage() {
   const tCommon = useTranslations("common");
 
   const [orderType, setOrderType] = useState<string>(ORDER_TYPE.DINE_IN);
+  const [foodType, setFoodType] = useState<FoodType>("normal");
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [selectedRiderId, setSelectedRiderId] = useState<number | null>(null);
@@ -113,11 +114,12 @@ export default function POSPage() {
     if (!menuItems) return [];
     return menuItems.filter((item: MenuItem) => {
       if (!item.isAvailable) return false;
+      if (foodType === "foreign" ? !item.isForeign : item.isForeign) return false;
       if (categoryFilter && item.categoryId !== categoryFilter) return false;
       if (menuSearch && !item.name.includes(menuSearch)) return false;
       return true;
     });
-  }, [menuItems, menuSearch, categoryFilter]);
+  }, [menuItems, menuSearch, categoryFilter, foodType]);
 
   const cartSubtotal = useMemo(() => {
     if (serverOrder) return serverOrder.subtotal;
@@ -149,6 +151,7 @@ export default function POSPage() {
     setSelectedRiderId(null);
     setDiscountValue(0);
     setServiceChargeValue(0);
+    setFoodType("normal");
   };
 
   const handleOrderTypeChange = (type: string) => {
@@ -221,6 +224,7 @@ export default function POSPage() {
     }));
     const orderData = {
       orderType,
+      isForeign: foodType === "foreign",
       ...(selectedTableId && { tableId: selectedTableId }),
       ...(selectedCustomerId && { customerId: selectedCustomerId }),
       ...(selectedRiderId && { deliveryRiderId: selectedRiderId }),
@@ -295,6 +299,7 @@ export default function POSPage() {
     await resumeOrderMutation.mutateAsync(order.id);
     setActiveOrderId(order.id);
     setOrderType(order.orderType);
+    setFoodType(order.isForeign ? "foreign" : "normal");
     setSelectedTableId(order.tableId);
     setSelectedCustomerId(order.customerId);
     setSelectedRiderId(order.deliveryRiderId);
@@ -369,6 +374,8 @@ export default function POSPage() {
           <OrderPanel
             orderType={orderType}
             onOrderTypeChange={handleOrderTypeChange}
+            foodType={foodType}
+            onFoodTypeChange={setFoodType}
             selectedTableId={selectedTableId}
             onTableChange={setSelectedTableId}
             selectedCustomerId={selectedCustomerId}

@@ -11,5 +11,6 @@ namespace RestaurantPOS.Features.MenuItems
         public string Notes { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsAvailable { get; set; }
+        public bool IsForeign { get; set; }
     }
 }

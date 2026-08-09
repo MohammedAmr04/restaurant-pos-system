@@ -12,6 +12,7 @@ export interface MenuItem {
   notes: string | null;
   displayOrder: number;
   isAvailable: boolean;
+  isForeign: boolean;
 }
 
 export interface CreateMenuItemDto {
@@ -21,6 +22,7 @@ export interface CreateMenuItemDto {
   image?: string;
   notes?: string;
   displayOrder: number;
+  isForeign: boolean;
 }
 
 export interface UpdateMenuItemDto {
@@ -30,6 +32,7 @@ export interface UpdateMenuItemDto {
   image?: string;
   notes?: string;
   displayOrder: number;
+  isForeign: boolean;
 }
 
 export function useMenuItems() {

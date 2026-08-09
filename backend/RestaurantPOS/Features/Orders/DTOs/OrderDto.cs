@@ -27,6 +27,7 @@ namespace RestaurantPOS.Features.Orders
         public decimal GrandTotal { get; set; }
         public string PaymentMethod { get; set; }
         public decimal PaidAmount { get; set; }
+        public bool IsForeign { get; set; }
         public DateTime BusinessDate { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }

@@ -13,6 +13,7 @@ export const menuItemSchema = (t: TFunction) =>
     image: z.string().optional(),
     notes: z.string().optional(),
     displayOrder: z.number().min(0, t("minValue", { field: "الترتيب", min: 0 })),
+    isForeign: z.boolean(),
   });
 
 export type MenuItemFormData = z.infer<ReturnType<typeof menuItemSchema>>;

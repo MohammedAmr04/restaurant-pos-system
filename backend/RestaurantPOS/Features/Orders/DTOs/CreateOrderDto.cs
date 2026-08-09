@@ -9,6 +9,7 @@ namespace RestaurantPOS.Features.Orders
         public int? CustomerId { get; set; }
         public int? TableId { get; set; }
         public int? DeliveryRiderId { get; set; }
+        public bool IsForeign { get; set; }
         public List<OrderItemDto> Items { get; set; }
     }
 }

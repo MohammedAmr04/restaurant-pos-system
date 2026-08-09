@@ -40,6 +40,7 @@ namespace RestaurantPOS.Features.Printing
                 GrandTotal = order.GrandTotal,
                 PaidAmount = order.PaidAmount,
                 PaymentMethod = order.PaymentMethod,
+                IsForeign = order.IsForeign,
                 FooterText = "شكراً لزيارتكم",
             };
         }

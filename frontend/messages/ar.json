@@ -124,7 +124,8 @@
     "updateSuccess": "تم تحديث الصنف بنجاح",
     "priceRequired": "السعر يجب أن يكون أكبر من صفر",
     "emptyTitle": "لا توجد أصناف",
-    "emptyDescription": "ابدأ بإضافة صنف جديد"
+    "emptyDescription": "ابدأ بإضافة صنف جديد",
+    "foreignFood": "أجنبي"
   },
   "tables": {
     "title": "الطاولات",
@@ -191,6 +192,9 @@
     "loading": "جاري تحميل نقطة البيع...",
     "newOrder": "طلب جديد",
     "holdOrders": "الطلبات المعلّقة",
+    "foodTypeLabel": "نوع الطعام",
+    "normalFood": "عادي",
+    "foreignFood": "أجنبي",
     "dineIn": "صالة",
     "takeAway": "تيك أواي",
     "delivery": "ديلفري",

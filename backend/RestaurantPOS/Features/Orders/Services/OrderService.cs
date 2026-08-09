@@ -85,6 +85,7 @@ namespace RestaurantPOS.Features.Orders
                 GrandTotal = 0,
                 PaymentMethod = null,
                 PaidAmount = 0,
+                IsForeign = dto.IsForeign,
                 BusinessDate = DateTime.Now.Date,
                 CompletedAt = null,
                 CreatedAt = DateTime.Now
@@ -468,6 +469,7 @@ namespace RestaurantPOS.Features.Orders
                 GrandTotal = order.GrandTotal,
                 PaymentMethod = order.PaymentMethod,
                 PaidAmount = order.PaidAmount,
+                IsForeign = order.IsForeign,
                 BusinessDate = order.BusinessDate,
                 CompletedAt = order.CompletedAt,
                 CreatedAt = order.CreatedAt,

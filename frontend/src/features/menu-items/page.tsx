@@ -59,6 +59,7 @@ export default function MenuItemsPage() {
       image: undefined,
       notes: undefined,
       displayOrder: 0,
+      isForeign: false,
     },
   });
 
@@ -102,6 +103,7 @@ export default function MenuItemsPage() {
       image: item.image ?? undefined,
       notes: item.notes ?? undefined,
       displayOrder: item.displayOrder,
+      isForeign: item.isForeign,
     });
   };
 
@@ -171,7 +173,14 @@ export default function MenuItemsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.name}
+                      <span className="flex items-center gap-2">
+                        {item.name}
+                        {item.isForeign && (
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                            {t("foreignFood")}
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.categoryName}
@@ -284,6 +293,14 @@ export default function MenuItemsPage() {
                 <p className="text-sm text-destructive">{errors.notes.message}</p>
               )}
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("isForeign")}
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <Label>{t("foreignFood")}</Label>
+            </div>
             <div className="flex justify-end gap-3">
               <Button
                 variant="secondary"
@@ -365,6 +382,14 @@ export default function MenuItemsPage() {
               {errors.notes && (
                 <p className="text-sm text-destructive">{errors.notes.message}</p>
               )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("isForeign")}
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <Label>{t("foreignFood")}</Label>
             </div>
             <div className="flex justify-end gap-3">
               <Button

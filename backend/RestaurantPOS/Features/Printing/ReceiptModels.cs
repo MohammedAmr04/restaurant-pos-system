@@ -37,6 +37,7 @@ namespace RestaurantPOS.Features.Printing
         public decimal GrandTotal { get; set; }
         public decimal PaidAmount { get; set; }
         public string PaymentMethod { get; set; }
+        public bool IsForeign { get; set; }
         public string FooterText { get; set; }
     }
 

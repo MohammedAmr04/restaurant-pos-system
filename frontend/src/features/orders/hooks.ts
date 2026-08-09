@@ -33,6 +33,7 @@ export interface Order {
   grandTotal: number;
   paymentMethod: string | null;
   paidAmount: number;
+  isForeign: boolean;
   businessDate: string;
   completedAt: string | null;
   createdAt: string;
@@ -44,6 +45,7 @@ export interface CreateOrderDto {
   customerId?: number;
   tableId?: number;
   deliveryRiderId?: number;
+  isForeign?: boolean;
   items: { menuItemId: number; quantity: number; notes?: string }[];
 }
 
