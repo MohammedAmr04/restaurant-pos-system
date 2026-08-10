@@ -125,6 +125,7 @@
     "priceRequired": "السعر يجب أن يكون أكبر من صفر",
     "emptyTitle": "لا توجد أصناف",
     "emptyDescription": "ابدأ بإضافة صنف جديد",
+    "searchPlaceholder": "ابحث عن صنف بالاسم...",
     "foreignFood": "أجنبي"
   },
   "tables": {
