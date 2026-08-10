@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "npx next build --webpack",
+    "dev": "node init && next dev",
+    "build": "node init && npx next build --webpack",
     "deploy": "npm run build && node -e \"const fs=require('fs'),p=require('path');const src=p.join(__dirname,'out'),dst=p.join(__dirname,'..','backend','RestaurantPOS','wwwroot');function cp(s,d){fs.mkdirSync(d,{recursive:true});for(const e of fs.readdirSync(s,{withFileTypes:true})){const sp=p.join(s,e.name),dp=p.join(d,e.name);e.isDirectory()?cp(sp,dp):fs.copyFileSync(sp,dp)}}cp(src,dst);console.log('Deployed to wwwroot');\"",
-    "start": "next start",
+    "start": "node init && next start",
     "lint": "eslint"
   },
   "dependencies": {
