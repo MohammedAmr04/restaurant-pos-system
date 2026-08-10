@@ -1,6 +1,17 @@
 import { apiClient } from "@/lib/api/client";
 import { QUERY_KEYS } from "@/lib/constants/query-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+
+export interface OrderTypeCountAmountDto {
+  count: number;
+  amount: number;
+}
+
+export interface OrderTypesBreakdownDto {
+  dineIn: OrderTypeCountAmountDto;
+  delivery: OrderTypeCountAmountDto;
+  takeAway: OrderTypeCountAmountDto;
+}
 
 export interface DailySalesReportDto {
   businessDate: string;
@@ -15,6 +26,7 @@ export interface DailySalesReportDto {
   revenueAfterExpenses: number;
   shiftStart: string;
   shiftEnd: string;
+  orderTypes: OrderTypesBreakdownDto;
 }
 
 export interface MonthlySalesReportDto {
@@ -61,12 +73,80 @@ export interface ReturnsReportDto {
   cashier: string;
 }
 
+export interface DailyInvoiceItemDto {
+  menuItemName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface DailyInvoiceDto {
+  id: number;
+  invoiceNumber: string;
+  orderType: string;
+  status: string;
+  createdAt: string;
+  cashier: string;
+  customerName: string | null;
+  paymentMethod: string | null;
+  subtotal: number;
+  discountValue: number;
+  serviceCharge: number;
+  tax: number;
+  grandTotal: number;
+  isReturned: boolean;
+  refundAmount: number;
+  returnReason: string | null;
+  returnedItems: string | null;
+  items: DailyInvoiceItemDto[];
+}
+
+export interface DailyDetailsDto {
+  businessDate: string;
+  totalOrders: number;
+  completedOrders: number;
+  returnedOrders: number;
+  grossSales: number;
+  returns: number;
+  discounts: number;
+  serviceCharges: number;
+  tax: number;
+  expenses: number;
+  net: number;
+  invoices: DailyInvoiceDto[];
+}
+
 export function useDailyReport(date?: string) {
   return useQuery({
     queryKey: date ? QUERY_KEYS.REPORTS_DAILY(date) : ["reports", "daily"],
     queryFn: async () => {
       const params = date ? `?date=${date}` : "";
       const response = await apiClient.get<DailySalesReportDto>(`/reports/daily${params}`);
+      return response.data;
+    },
+    enabled: !!date,
+  });
+}
+
+export function usePrintDailyReport() {
+  return useMutation({
+    mutationFn: async (date?: string) => {
+      const params = date ? `?date=${date}` : "";
+      const response = await apiClient.post(`/reports/daily/print${params}`);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
+    },
+  });
+}
+
+export function useDailyDetails(date?: string) {
+  return useQuery({
+    queryKey: date ? QUERY_KEYS.REPORTS_DAILY_DETAILS(date) : ["reports", "daily-details"],
+    queryFn: async () => {
+      const params = date ? `?date=${date}` : "";
+      const response = await apiClient.get<DailyDetailsDto>(`/reports/daily-details${params}`);
       return response.data;
     },
     enabled: !!date,

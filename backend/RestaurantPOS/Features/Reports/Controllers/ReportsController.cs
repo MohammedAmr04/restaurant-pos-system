@@ -36,6 +36,15 @@ namespace RestaurantPOS.Features.Reports.Controllers
         }
 
         [HttpGet]
+        [Route("daily-details")]
+        public async Task<IHttpActionResult> GetDailyDetails([FromUri] DateTime? date = null)
+        {
+            var reportDate = date ?? await _reportsService.GetCurrentBusinessDateAsync();
+            var report = await _reportsService.GetDailyDetailsAsync(reportDate);
+            return Ok(ApiResponse<DailyDetailsDto>.Ok(report));
+        }
+
+        [HttpGet]
         [Route("custom")]
         public async Task<IHttpActionResult> GetCustomReport([FromUri] DateTime startDate, [FromUri] DateTime endDate)
         {
