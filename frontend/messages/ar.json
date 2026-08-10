@@ -334,7 +334,12 @@
     "printError": "حدث خطأ أثناء إعادة الطباعة",
     "statusCompleted": "مكتمل",
     "statusReturned": "مرجع",
-    "generalCustomer": "عميل عام"
+    "generalCustomer": "عميل عام",
+    "returnedItems": "الأصناف المرتجعة",
+    "returnReason": "سبب الإرجاع",
+    "returnDate": "تاريخ الإرجاع",
+    "refundAmount": "مبلغ الاسترداد",
+    "totalRefund": "إجمالي المبلغ المسترد"
   },
   "expenses": {
     "title": "المصروفات",

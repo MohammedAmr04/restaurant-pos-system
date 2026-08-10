@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RestaurantPOS.Features.Returns;
 
 namespace RestaurantPOS.Features.Orders
 {
@@ -32,5 +33,10 @@ namespace RestaurantPOS.Features.Orders
         public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<OrderItemDetailDto> Items { get; set; }
+        public bool IsReturned { get; set; }
+        public DateTime? ReturnDate { get; set; }
+        public string ReturnReason { get; set; }
+        public decimal RefundAmount { get; set; }
+        public List<ReturnItemDetailDto> ReturnedItems { get; set; }
     }
 }

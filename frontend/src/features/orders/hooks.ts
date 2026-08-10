@@ -12,6 +12,14 @@ export interface OrderItemDetailDto {
   total: number;
 }
 
+export interface ReturnedItem {
+  id: number;
+  orderItemId: number;
+  menuItemName: string;
+  quantity: number;
+  refundAmount: number;
+}
+
 export interface Order {
   id: number;
   invoiceNumber: string;
@@ -38,6 +46,11 @@ export interface Order {
   completedAt: string | null;
   createdAt: string;
   items: OrderItemDetailDto[];
+  isReturned: boolean;
+  returnDate: string | null;
+  returnReason: string | null;
+  refundAmount: number;
+  returnedItems: ReturnedItem[] | null;
 }
 
 export interface CreateOrderDto {

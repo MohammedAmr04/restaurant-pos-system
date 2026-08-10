@@ -29,7 +29,7 @@ namespace RestaurantPOS.Features.Reports
             var businessDate = date.Date.ToString("yyyy-MM-dd");
 
             var orders = await _connection.QueryAsync<Features.Orders.Order>(
-                "SELECT * FROM Orders WHERE date(BusinessDate) = @BusinessDate AND Status = 'Completed'",
+                "SELECT * FROM Orders WHERE date(BusinessDate) = @BusinessDate AND Status IN ('Completed', 'Returned')",
                 new { BusinessDate = businessDate });
 
             var expenses = await _connection.QueryAsync<Features.Expenses.Expense>(
@@ -54,7 +54,8 @@ namespace RestaurantPOS.Features.Reports
             {
                 BusinessDate = date.Date,
                 TotalOrders = orders.Count(),
-                CompletedOrders = orders.Count(),
+                CompletedOrders = orders.Count(o => o.Status == "Completed"),
+                ReturnedOrders = orders.Count(o => o.Status == "Returned"),
                 TotalSales = totalSales,
                 Discounts = discounts,
                 ServiceCharge = serviceCharge,
@@ -100,7 +101,7 @@ namespace RestaurantPOS.Features.Reports
             var end = endDate.Date.ToString("yyyy-MM-dd");
 
             var orders = await _connection.QueryAsync<Features.Orders.Order>(
-                "SELECT * FROM Orders WHERE date(BusinessDate) >= @Start AND date(BusinessDate) <= @End AND Status = 'Completed'",
+                "SELECT * FROM Orders WHERE date(BusinessDate) >= @Start AND date(BusinessDate) <= @End AND Status IN ('Completed', 'Returned')",
                 new { Start = start, End = end });
 
             var expenses = await _connection.QueryAsync<Features.Expenses.Expense>(
@@ -185,7 +186,7 @@ namespace RestaurantPOS.Features.Reports
             var monthEnd = DateTime.Now.Date.ToString("yyyy-MM-dd");
 
             var todayOrders = await _connection.QueryAsync<Features.Orders.Order>(
-                "SELECT * FROM Orders WHERE date(BusinessDate) = @Today AND Status = 'Completed'",
+                "SELECT * FROM Orders WHERE date(BusinessDate) = @Today AND Status IN ('Completed', 'Returned')",
                 new { Today = today });
 
             var todayExpenses = await _connection.QueryAsync<Features.Expenses.Expense>(
@@ -197,7 +198,7 @@ namespace RestaurantPOS.Features.Reports
                 new { Today = today });
 
             var monthOrders = await _connection.QueryAsync<Features.Orders.Order>(
-                "SELECT * FROM Orders WHERE date(BusinessDate) >= @Start AND date(BusinessDate) <= @End AND Status = 'Completed'",
+                "SELECT * FROM Orders WHERE date(BusinessDate) >= @Start AND date(BusinessDate) <= @End AND Status IN ('Completed', 'Returned')",
                 new { Start = monthStart, End = monthEnd });
 
             var holdOrders = await _connection.QueryAsync<Features.Orders.Order>(

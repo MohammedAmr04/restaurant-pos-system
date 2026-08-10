@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RestaurantPOS.Features.MenuItems;
+using RestaurantPOS.Features.Returns;
 
 namespace RestaurantPOS.Features.Orders
 {
@@ -18,6 +19,8 @@ namespace RestaurantPOS.Features.Orders
         private readonly Features.Settings.ISettingsRepository _settingsRepository;
         private readonly Features.Settings.ISettingsService _settingsService;
         private readonly Features.Printing.IPrinterService _printerService;
+        private readonly Features.Returns.IReturnRepository _returnRepository;
+        private readonly Features.Returns.IReturnItemRepository _returnItemRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -29,7 +32,9 @@ namespace RestaurantPOS.Features.Orders
             Features.Authentication.IUserRepository userRepository,
             Features.Settings.ISettingsRepository settingsRepository,
             Features.Settings.ISettingsService settingsService,
-            Features.Printing.IPrinterService printerService)
+            Features.Printing.IPrinterService printerService,
+            Features.Returns.IReturnRepository returnRepository,
+            Features.Returns.IReturnItemRepository returnItemRepository)
         {
             _orderRepository = orderRepository;
             _orderItemRepository = orderItemRepository;
@@ -41,6 +46,8 @@ namespace RestaurantPOS.Features.Orders
             _settingsRepository = settingsRepository;
             _settingsService = settingsService;
             _printerService = printerService;
+            _returnRepository = returnRepository;
+            _returnItemRepository = returnItemRepository;
         }
 
         public async Task<IEnumerable<OrderDto>> GetAllAsync()
@@ -446,6 +453,37 @@ namespace RestaurantPOS.Features.Orders
                 deliveryRiderName = rider?.Name;
             }
 
+            bool isReturned = order.Status == "Returned";
+            DateTime? returnDate = null;
+            string returnReason = null;
+            decimal refundAmount = 0;
+            List<ReturnItemDetailDto> returnedItems = null;
+            if (isReturned)
+            {
+                var returnEntity = await _returnRepository.GetByOrderIdAsync(order.Id);
+                if (returnEntity != null)
+                {
+                    returnDate = returnEntity.CreatedAt;
+                    returnReason = returnEntity.Reason;
+                    refundAmount = returnEntity.TotalRefund;
+                    returnedItems = new List<ReturnItemDetailDto>();
+                    var returnItems = await _returnItemRepository.GetByReturnIdAsync(returnEntity.Id);
+                    foreach (var returnItem in returnItems)
+                    {
+                        var orderItem = await _orderItemRepository.GetByIdAsync(returnItem.OrderItemId);
+                        var menuItem = orderItem != null ? await _menuItemRepository.GetByIdAsync(orderItem.MenuItemId) : null;
+                        returnedItems.Add(new ReturnItemDetailDto
+                        {
+                            Id = returnItem.Id,
+                            OrderItemId = returnItem.OrderItemId,
+                            MenuItemName = menuItem?.Name ?? "Unknown",
+                            Quantity = returnItem.Quantity,
+                            RefundAmount = returnItem.RefundAmount
+                        });
+                    }
+                }
+            }
+
             return new OrderDto
             {
                 Id = order.Id,
@@ -474,7 +512,12 @@ namespace RestaurantPOS.Features.Orders
                 BusinessDate = order.BusinessDate,
                 CompletedAt = order.CompletedAt,
                 CreatedAt = order.CreatedAt,
-                Items = itemDetails
+                Items = itemDetails,
+                IsReturned = isReturned,
+                ReturnDate = returnDate,
+                ReturnReason = returnReason,
+                RefundAmount = refundAmount,
+                ReturnedItems = returnedItems
             };
         }
     }

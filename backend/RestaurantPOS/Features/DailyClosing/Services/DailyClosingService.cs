@@ -41,7 +41,7 @@ namespace RestaurantPOS.Features.DailyClosing
             var returns = await _returnRepository.GetAllAsync();
 
             var dateStr = date.ToString("yyyy-MM-dd");
-            var dayOrders = orders.Where(o => o.BusinessDate.ToString("yyyy-MM-dd") == dateStr && o.Status == "Completed");
+            var dayOrders = orders.Where(o => o.BusinessDate.ToString("yyyy-MM-dd") == dateStr && (o.Status == "Completed" || o.Status == "Returned"));
             var dayExpenses = expenses.Where(e => e.BusinessDate.ToString("yyyy-MM-dd") == dateStr);
             var dayReturns = returns.Where(r => r.CreatedAt.ToString("yyyy-MM-dd") == dateStr);
 
