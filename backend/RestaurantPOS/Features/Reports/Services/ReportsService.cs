@@ -10,10 +10,18 @@ namespace RestaurantPOS.Features.Reports
     public class ReportsService : IReportsService
     {
         private readonly IDbConnection _connection;
+        private readonly Settings.ISettingsRepository _settingsRepository;
 
-        public ReportsService(IDbConnection connection)
+        public ReportsService(IDbConnection connection, Settings.ISettingsRepository settingsRepository)
         {
             _connection = connection;
+            _settingsRepository = settingsRepository;
+        }
+
+        public async Task<DateTime> GetCurrentBusinessDateAsync()
+        {
+            var settings = await _settingsRepository.GetAsync();
+            return Shared.BusinessDayHelper.GetBusinessDate(DateTime.Now, Shared.BusinessDayHelper.GetShiftStart(settings));
         }
 
         public async Task<DailySalesReportDto> GetDailyReportAsync(DateTime date)
@@ -32,6 +40,10 @@ namespace RestaurantPOS.Features.Reports
                 "SELECT r.* FROM Returns r INNER JOIN Orders o ON r.OrderId = o.Id WHERE date(o.BusinessDate) = @BusinessDate",
                 new { BusinessDate = businessDate });
 
+            var settings = await _settingsRepository.GetAsync();
+            var shiftStart = Shared.BusinessDayHelper.GetShiftStart(settings);
+            var shiftEnd = Shared.BusinessDayHelper.GetShiftEnd(settings);
+
             var totalSales = orders.Sum(o => o.GrandTotal);
             var discounts = orders.Sum(o => o.DiscountValue);
             var serviceCharge = orders.Sum(o => o.ServiceCharge);
@@ -49,7 +61,9 @@ namespace RestaurantPOS.Features.Reports
                 Returns = totalReturns,
                 Expenses = totalExpenses,
                 RevenueBeforeExpenses = totalSales - totalReturns,
-                RevenueAfterExpenses = totalSales - totalReturns - totalExpenses
+                RevenueAfterExpenses = totalSales - totalReturns - totalExpenses,
+                ShiftStart = Shared.BusinessDayHelper.FormatShift(shiftStart),
+                ShiftEnd = Shared.BusinessDayHelper.FormatShift(shiftEnd),
             };
         }
 
@@ -165,7 +179,8 @@ namespace RestaurantPOS.Features.Reports
 
         public async Task<DashboardSummaryDto> GetDashboardSummaryAsync()
         {
-            var today = DateTime.Now.Date.ToString("yyyy-MM-dd");
+            var settings = await _settingsRepository.GetAsync();
+            var today = Shared.BusinessDayHelper.GetBusinessDate(DateTime.Now, Shared.BusinessDayHelper.GetShiftStart(settings)).ToString("yyyy-MM-dd");
             var monthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("yyyy-MM-dd");
             var monthEnd = DateTime.Now.Date.ToString("yyyy-MM-dd");
 

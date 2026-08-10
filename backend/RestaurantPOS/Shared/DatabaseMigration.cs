@@ -29,7 +29,8 @@ namespace RestaurantPOS.Shared
             "Migrations/017_add_category_image.sql",
             "Migrations/018_update_default_printer.sql",
             "Migrations/019_update_admin_password.sql",
-            "Migrations/020_add_foreign_flags.sql"
+            "Migrations/020_add_foreign_flags.sql",
+            "Migrations/021_add_shift_settings.sql"
         };
 
         public static void RunMigrations()

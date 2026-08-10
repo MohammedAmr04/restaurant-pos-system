@@ -28,6 +28,7 @@ namespace RestaurantPOS.Features.Settings
                            ReceiptHeader = @ReceiptHeader, ReceiptFooter = @ReceiptFooter,
                            PrinterName = @PrinterName, PaperWidth = @PaperWidth,
                            PrinterCopies = @PrinterCopies, PrinterEnabled = @PrinterEnabled,
+                           ShiftStart = @ShiftStart, ShiftEnd = @ShiftEnd,
                            UpdatedAt = @UpdatedAt 
                        WHERE Id = @Id";
             var affectedRows = await _connection.ExecuteAsync(sql, settings);

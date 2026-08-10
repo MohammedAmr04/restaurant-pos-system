@@ -11,22 +11,27 @@ namespace RestaurantPOS.Features.DailyClosing
         private readonly Orders.IOrderRepository _orderRepository;
         private readonly Expenses.IExpenseRepository _expenseRepository;
         private readonly Returns.IReturnRepository _returnRepository;
+        private readonly Settings.ISettingsRepository _settingsRepository;
 
         public DailyClosingService(
             IDailyClosingRepository closingRepository,
             Orders.IOrderRepository orderRepository,
             Expenses.IExpenseRepository expenseRepository,
-            Returns.IReturnRepository returnRepository)
+            Returns.IReturnRepository returnRepository,
+            Settings.ISettingsRepository settingsRepository)
         {
             _closingRepository = closingRepository;
             _orderRepository = orderRepository;
             _expenseRepository = expenseRepository;
             _returnRepository = returnRepository;
+            _settingsRepository = settingsRepository;
         }
 
         public async Task<DailyClosingSummaryDto> GetTodaySummaryAsync()
         {
-            return await GetSummaryByDateAsync(DateTime.Now.Date);
+            var settings = await _settingsRepository.GetAsync();
+            var businessDate = Shared.BusinessDayHelper.GetBusinessDate(DateTime.Now, Shared.BusinessDayHelper.GetShiftStart(settings));
+            return await GetSummaryByDateAsync(businessDate);
         }
 
         public async Task<DailyClosingSummaryDto> GetSummaryByDateAsync(DateTime date)
@@ -66,7 +71,7 @@ namespace RestaurantPOS.Features.DailyClosing
             var closing = new DailyClosing
             {
                 UserId = Shared.AuthHelper.GetCurrentUserId(),
-                BusinessDate = DateTime.Now.Date,
+                BusinessDate = summary.BusinessDate.Date,
                 TotalSales = summary.TotalSales,
                 TotalExpenses = summary.TotalExpenses,
                 TotalReturns = summary.TotalReturns,

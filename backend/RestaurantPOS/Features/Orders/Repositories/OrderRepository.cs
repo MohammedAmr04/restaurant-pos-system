@@ -103,10 +103,10 @@ namespace RestaurantPOS.Features.Orders
             return affectedRows > 0;
         }
 
-        public async Task<string> GetNextInvoiceNumberAsync()
+        public async Task<string> GetNextInvoiceNumberAsync(DateTime businessDate)
         {
-            var today = DateTime.Now.ToString("yyyy-MM-dd");
-            var prefix = DateTime.Now.ToString("yyyyMMdd");
+            var today = businessDate.Date.ToString("yyyy-MM-dd");
+            var prefix = businessDate.Date.ToString("yyyyMMdd");
             var sql = "SELECT COUNT(*) FROM Orders WHERE date(BusinessDate) = @BusinessDate";
             var count = await _connection.ExecuteScalarAsync<int>(sql, new { BusinessDate = today });
             return $"{prefix}-{(count + 1).ToString("D4")}";

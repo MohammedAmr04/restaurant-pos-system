@@ -118,6 +118,11 @@ function DailyReportTab() {
             PDF {tCommon("export")}
           </Button>
         )}
+        {data && data.shiftStart && (
+          <span className="text-sm text-gray-500">
+            {t("shift")}: {data.shiftStart} - {data.shiftEnd}
+          </span>
+        )}
       </div>
 
       {data && (

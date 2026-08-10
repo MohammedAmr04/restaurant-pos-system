@@ -411,7 +411,8 @@
     "reportDetails": "تفاصيل التقرير",
     "riderDetails": "تفاصيل السائق",
     "expenseDetails": "تفاصيل المصروف",
-    "returnDetails": "تفاصيل المرجع"
+    "returnDetails": "تفاصيل المرجع",
+    "shift": "الفترة"
   },
   "settings": {
     "title": "الإعدادات",
@@ -430,6 +431,11 @@
     "receiptSettings": "إعدادات الإيصال",
     "receiptHeader": "رأس الإيصال",
     "receiptFooter": "تذييل الإيصال",
+    "shiftSettings": "إعدادات الوردية",
+    "shiftStart": "بداية الوردية",
+    "shiftEnd": "نهاية الوردية",
+    "shiftStartHint": "بداية الوردية (مثال: 11:00)",
+    "shiftEndHint": "نهاية الوردية (مثال: 03:00)",
     "saveButton": "حفظ الإعدادات",
     "saveSuccess": "تم حفظ الإعدادات بنجاح"
   },
@@ -514,6 +520,7 @@
     "selectAtLeast": "يجب اختيار {field} واحد على الأقل",
     "selectField": "يجب اختيار {field}",
     "fieldRequired": "{field} مطلوب",
+    "timeFormat": "{field} يجب أن يكون بصيغة HH:MM",
     "menuItem": "الصنف",
     "quantity": "الكمية",
     "order": "الطلب",

@@ -20,7 +20,7 @@ namespace RestaurantPOS.Features.Reports.Controllers
         [Route("daily")]
         public async Task<IHttpActionResult> GetDailyReport([FromUri] DateTime? date = null)
         {
-            var reportDate = date ?? DateTime.Now;
+            var reportDate = date ?? await _reportsService.GetCurrentBusinessDateAsync();
             var report = await _reportsService.GetDailyReportAsync(reportDate);
             return Ok(ApiResponse<DailySalesReportDto>.Ok(report));
         }

@@ -8,10 +8,12 @@ namespace RestaurantPOS.Features.Expenses
     public class ExpenseService : IExpenseService
     {
         private readonly IExpenseRepository _expenseRepository;
+        private readonly Settings.ISettingsRepository _settingsRepository;
 
-        public ExpenseService(IExpenseRepository expenseRepository)
+        public ExpenseService(IExpenseRepository expenseRepository, Settings.ISettingsRepository settingsRepository)
         {
             _expenseRepository = expenseRepository;
+            _settingsRepository = settingsRepository;
         }
 
         public async Task<IEnumerable<ExpenseDto>> GetAllAsync()
@@ -29,13 +31,14 @@ namespace RestaurantPOS.Features.Expenses
 
         public async Task<ExpenseDto> CreateAsync(CreateExpenseDto dto)
         {
+            var settings = await _settingsRepository.GetAsync();
             var expense = new Expense
             {
                 UserId = Shared.AuthHelper.GetCurrentUserId(),
                 Title = dto.Title,
                 Amount = dto.Amount,
                 Notes = dto.Notes,
-                BusinessDate = DateTime.Now.Date,
+                BusinessDate = Shared.BusinessDayHelper.GetBusinessDate(DateTime.Now, Shared.BusinessDayHelper.GetShiftStart(settings)),
                 CreatedAt = DateTime.Now
             };
 

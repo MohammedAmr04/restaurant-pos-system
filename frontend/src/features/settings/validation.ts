@@ -20,6 +20,8 @@ export const settingsSchema = (t: TFunction) =>
       .max(100, t("maxPercent", { field: "نسبة رسوم الخدمة" })),
     receiptHeader: z.string().optional(),
     receiptFooter: z.string().optional(),
+    shiftStart: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, t("timeFormat", { field: "بداية الوردية" })),
+    shiftEnd: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, t("timeFormat", { field: "نهاية الوردية" })),
   });
 
 export type SettingsFormData = z.infer<ReturnType<typeof settingsSchema>>;

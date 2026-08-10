@@ -13,6 +13,8 @@ export interface DailySalesReportDto {
   expenses: number;
   revenueBeforeExpenses: number;
   revenueAfterExpenses: number;
+  shiftStart: string;
+  shiftEnd: string;
 }
 
 export interface MonthlySalesReportDto {

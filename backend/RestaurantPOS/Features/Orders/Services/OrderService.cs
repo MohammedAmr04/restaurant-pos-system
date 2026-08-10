@@ -65,8 +65,9 @@ namespace RestaurantPOS.Features.Orders
 
         public async Task<OrderDto> CreateOrderAsync(CreateOrderDto dto)
         {
-            var invoiceNumber = await _orderRepository.GetNextInvoiceNumberAsync();
             var settings = await _settingsRepository.GetAsync();
+            var businessDate = Shared.BusinessDayHelper.GetBusinessDate(DateTime.Now, Shared.BusinessDayHelper.GetShiftStart(settings));
+            var invoiceNumber = await _orderRepository.GetNextInvoiceNumberAsync(businessDate);
 
             var order = new Order
             {
@@ -86,7 +87,7 @@ namespace RestaurantPOS.Features.Orders
                 PaymentMethod = null,
                 PaidAmount = 0,
                 IsForeign = dto.IsForeign,
-                BusinessDate = DateTime.Now.Date,
+                BusinessDate = businessDate,
                 CompletedAt = null,
                 CreatedAt = DateTime.Now
             };

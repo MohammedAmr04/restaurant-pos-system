@@ -45,6 +45,8 @@ export default function SettingsPage() {
       serviceChargePercentage: 0,
       receiptHeader: "",
       receiptFooter: "",
+      shiftStart: "11:00",
+      shiftEnd: "03:00",
     },
   });
 
@@ -64,6 +66,8 @@ export default function SettingsPage() {
         serviceChargePercentage: settings.serviceChargePercentage,
         receiptHeader: settings.receiptHeader,
         receiptFooter: settings.receiptFooter,
+        shiftStart: settings.shiftStart || "11:00",
+        shiftEnd: settings.shiftEnd || "03:00",
       });
     }
   }, [settings, reset]);
@@ -211,6 +215,30 @@ export default function SettingsPage() {
                 <Textarea rows={3} {...register("receiptFooter")} />
                 {errors.receiptFooter && (
                   <p className="text-sm text-red-500">{errors.receiptFooter.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              {t("shiftSettings")}
+            </h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>{t("shiftStart")}</Label>
+                <Input type="time" {...register("shiftStart")} />
+                <p className="text-xs text-gray-500">{t("shiftStartHint")}</p>
+                {errors.shiftStart && (
+                  <p className="text-sm text-red-500">{errors.shiftStart.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>{t("shiftEnd")}</Label>
+                <Input type="time" {...register("shiftEnd")} />
+                <p className="text-xs text-gray-500">{t("shiftEndHint")}</p>
+                {errors.shiftEnd && (
+                  <p className="text-sm text-red-500">{errors.shiftEnd.message}</p>
                 )}
               </div>
             </div>

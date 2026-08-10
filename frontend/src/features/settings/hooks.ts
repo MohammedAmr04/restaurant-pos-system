@@ -14,6 +14,8 @@ export interface SettingsDto {
   serviceChargePercentage: number;
   receiptHeader: string;
   receiptFooter: string;
+  shiftStart: string;
+  shiftEnd: string;
 }
 
 export interface UpdateSettingsDto {
@@ -27,6 +29,8 @@ export interface UpdateSettingsDto {
   serviceChargePercentage: number;
   receiptHeader?: string;
   receiptFooter?: string;
+  shiftStart: string;
+  shiftEnd: string;
 }
 
 export function useSettings() {

@@ -14,5 +14,7 @@ namespace RestaurantPOS.Features.Reports
         public decimal Expenses { get; set; }
         public decimal RevenueBeforeExpenses { get; set; }
         public decimal RevenueAfterExpenses { get; set; }
+        public string ShiftStart { get; set; }
+        public string ShiftEnd { get; set; }
     }
 }
