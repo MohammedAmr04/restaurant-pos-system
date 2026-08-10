@@ -48,6 +48,8 @@ interface OrderPanelProps {
   onOpenDiscount: () => void;
   onOpenServiceCharge: () => void;
   onOpenPayment: () => void;
+  onPrintKitchen: () => void;
+  isPrintingKitchen: boolean;
   onHoldOrder: () => void;
   onCreateOrder: () => void;
   onCancelOrder: () => void;
@@ -91,6 +93,8 @@ export function OrderPanel({
   onOpenDiscount,
   onOpenServiceCharge,
   onOpenPayment,
+  onPrintKitchen,
+  isPrintingKitchen,
   onHoldOrder,
   onCreateOrder,
   onCancelOrder,
@@ -340,6 +344,17 @@ export function OrderPanel({
 
         {activeOrder && (
           <div className="space-y-2">
+            {activeOrder.orderType === ORDER_TYPE.DINE_IN && (
+              <Button
+                variant="outline"
+                className="w-full h-12"
+                onClick={onPrintKitchen}
+                disabled={isPrintingKitchen}
+              >
+                <Printer className="w-4 h-4 ml-1" />
+                {t("printKitchen")}
+              </Button>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"

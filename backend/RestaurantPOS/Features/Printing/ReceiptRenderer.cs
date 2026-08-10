@@ -81,6 +81,110 @@ namespace RestaurantPOS.Features.Printing
             }
         }
 
+        public static byte[] RenderDailyReportToBytes(DailyReportModel report)
+        {
+            using (var bitmap = RenderDailyReport(report))
+            using (var stream = new MemoryStream())
+            {
+                bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                return stream.ToArray();
+            }
+        }
+
+        private static Bitmap RenderDailyReport(DailyReportModel report)
+        {
+            int contentWidth = PaperWidth80mm - (Margin * 2);
+            var canvas = new Bitmap(PaperWidth80mm, 6000);
+
+            using (var g = Graphics.FromImage(canvas))
+            {
+                g.Clear(Color.White);
+                g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+
+                int y = Margin;
+
+                // Restaurant Name
+                y = DrawText(g, report.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Report Title
+                y = DrawText(g, "التقرير اليومي", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Business Date & Shift
+                var arabicDay = GetArabicDayName(report.BusinessDate);
+                y = DrawText(g, $"تاريخ اليوم: {report.BusinessDate:yyyy/MM/dd}  {arabicDay}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الفترة: {report.ShiftStart} - {report.ShiftEnd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"وقت الطباعة: {report.PrintedAt:yyyy/MM/dd hh:mm tt}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Report Fields
+                y = DrawText(g, $"إجمالي الطلبات: {ToArabicNumerals(report.TotalOrders.ToString())}", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات المكتملة: {ToArabicNumerals(report.CompletedOrders.ToString())}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات المرجعة: {ToArabicNumerals(report.ReturnedOrders.ToString())}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"إجمالي المبيعات: {ToArabicNumerals(report.TotalSales.ToString())}", TotalsSize, FontStyle.Regular,Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الخصومات: {report.Discounts:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"رسوم الخدمة: {report.ServiceCharge:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المرتجعات: {report.Returns:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المصروفات: {report.Expenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الإيراد قبل المصروفات: {report.RevenueBeforeExpenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الإيراد بعد المصروفات: {report.RevenueAfterExpenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y = DrawText(g, $"رسوم الخدمة: {report.ServiceCharge:F2}", TotalsSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Order Type Breakdown
+                y = DrawText(g, "تفصيل أنواع الطلبات", ItemSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapMedium;
+
+                y = DrawText(g, "صالة", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.DineInCount.ToString())}", ItemSize - 2, FontStyle.Regular ,Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.DineInAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, "توصيل", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.DeliveryCount.ToString())}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.DeliveryAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y = DrawText(g, "تيك أواي", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.TakeAwayCount.ToString())}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.TakeAwayAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Footer
+                if (!string.IsNullOrEmpty(report.Address))
+                    y = DrawText(g, report.Address, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                if (!string.IsNullOrEmpty(report.Phone))
+                    y = DrawText(g, report.Phone, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                if (!string.IsNullOrEmpty(report.Phone2))
+                    y = DrawText(g, report.Phone2, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                y = DrawText(g, "Software by brazilyy", FooterSize - 2, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                y += Margin;
+
+                return CropBitmap(canvas, y);
+            }
+        }
+
         private static Bitmap RenderKitchenReceipt(ReceiptModel receipt)
         {
             int contentWidth = PaperWidth80mm - (Margin * 2);

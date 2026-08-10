@@ -41,6 +41,7 @@ import {
   useCompleteOrder,
   useResumeOrder,
   useDeleteOrder,
+  usePrintKitchen,
   Order,
 } from "./hooks";
 import type { MenuItem } from "@/features/menu-items/hooks";
@@ -98,6 +99,7 @@ export default function POSPage() {
   const completeOrderMutation = useCompleteOrder();
   const resumeOrderMutation = useResumeOrder();
   const deleteOrderMutation = useDeleteOrder();
+  const printKitchenMutation = usePrintKitchen();
 
   const categories = useMemo(() => {
     if (!menuItems) return [];
@@ -330,6 +332,16 @@ export default function POSPage() {
     }
   };
 
+  const handlePrintKitchen = async () => {
+    if (!serverOrder) return;
+    try {
+      await printKitchenMutation.mutateAsync(serverOrder.id);
+      toast.success(tCommon("success"));
+    } catch (error: any) {
+      toast.error(error.message || t("printKitchenError"));
+    }
+  };
+
   const openPaymentDialog = () => {
     setPaidAmount(cartGrandTotal);
     setIsPaymentOpen(true);
@@ -397,6 +409,8 @@ export default function POSPage() {
             onOpenDiscount={() => setIsDiscountOpen(true)}
             onOpenServiceCharge={() => setIsServiceChargeOpen(true)}
             onOpenPayment={openPaymentDialog}
+            onPrintKitchen={handlePrintKitchen}
+            isPrintingKitchen={printKitchenMutation.isPending}
             onHoldOrder={handleHoldOrder}
             onCreateOrder={handleCreateOrder}
             onCancelOrder={resetForm}

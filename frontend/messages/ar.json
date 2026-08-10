@@ -215,6 +215,8 @@
     "discountButton": "خصم",
     "serviceChargeButton": "رسوم خدمة",
     "completeButton": "إتمام",
+    "printKitchen": "طباعة إيصال المطبخ",
+    "printKitchenError": "فشل طباعة إيصال المطبخ",
     "searchMenu": "بحث في القائمة...",
     "noMenuItems": "لا توجد أصناف",
     "noMenuItemsAvailable": "لا توجد أصناف متاحة",

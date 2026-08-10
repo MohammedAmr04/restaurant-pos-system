@@ -347,3 +347,15 @@ export function useDeleteOrder() {
     },
   });
 }
+
+export function usePrintKitchen() {
+  return useMutation({
+    mutationFn: async (orderId: number) => {
+      const response = await apiClient.post(`/orders/${orderId}/print-kitchen`);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
+    },
+  });
+}
