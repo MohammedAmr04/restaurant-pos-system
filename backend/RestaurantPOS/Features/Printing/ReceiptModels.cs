@@ -37,6 +37,7 @@ namespace RestaurantPOS.Features.Printing
         public decimal GrandTotal { get; set; }
         public decimal PaidAmount { get; set; }
         public string PaymentMethod { get; set; }
+        public bool IsForeign { get; set; }
         public string FooterText { get; set; }
     }
 
@@ -47,5 +48,33 @@ namespace RestaurantPOS.Features.Printing
         public decimal UnitPrice { get; set; }
         public decimal Total { get; set; }
         public string Notes { get; set; }
+    }
+
+    public class DailyReportModel
+    {
+        public string RestaurantName { get; set; }
+        public string Phone { get; set; }
+        public string Phone2 { get; set; }
+        public string Address { get; set; }
+        public DateTime BusinessDate { get; set; }
+        public string ShiftStart { get; set; }
+        public string ShiftEnd { get; set; }
+        public int TotalOrders { get; set; }
+        public int CompletedOrders { get; set; }
+        public int ReturnedOrders { get; set; }
+        public decimal TotalSales { get; set; }
+        public decimal Discounts { get; set; }
+        public decimal ServiceCharge { get; set; }
+        public decimal Returns { get; set; }
+        public decimal Expenses { get; set; }
+        public decimal RevenueBeforeExpenses { get; set; }
+        public decimal RevenueAfterExpenses { get; set; }
+        public int DineInCount { get; set; }
+        public decimal DineInAmount { get; set; }
+        public int DeliveryCount { get; set; }
+        public decimal DeliveryAmount { get; set; }
+        public int TakeAwayCount { get; set; }
+        public decimal TakeAwayAmount { get; set; }
+        public DateTime PrintedAt { get; set; }
     }
 }

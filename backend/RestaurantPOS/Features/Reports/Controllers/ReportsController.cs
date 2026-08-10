@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Web.Http;
+using RestaurantPOS.Features.Authentication.Services;
 using RestaurantPOS.Shared;
 
 namespace RestaurantPOS.Features.Reports.Controllers
@@ -10,19 +11,50 @@ namespace RestaurantPOS.Features.Reports.Controllers
     public class ReportsController : ApiController
     {
         private readonly IReportsService _reportsService;
+        private readonly Settings.ISettingsService _settingsService;
+        private readonly Printing.IPrinterService _printerService;
+        private readonly AuditLogService _auditLogService;
 
-        public ReportsController(IReportsService reportsService)
+        public ReportsController(
+            IReportsService reportsService,
+            Settings.ISettingsService settingsService,
+            Printing.IPrinterService printerService,
+            AuditLogService auditLogService)
         {
             _reportsService = reportsService;
+            _settingsService = settingsService;
+            _printerService = printerService;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
         [Route("daily")]
         public async Task<IHttpActionResult> GetDailyReport([FromUri] DateTime? date = null)
         {
-            var reportDate = date ?? DateTime.Now;
+            var reportDate = date ?? await _reportsService.GetCurrentBusinessDateAsync();
             var report = await _reportsService.GetDailyReportAsync(reportDate);
             return Ok(ApiResponse<DailySalesReportDto>.Ok(report));
+        }
+
+        [HttpPost]
+        [Route("daily/print")]
+        public async Task<IHttpActionResult> PrintDailyReport([FromUri] DateTime? date = null)
+        {
+            try
+            {
+                var reportDate = date ?? await _reportsService.GetCurrentBusinessDateAsync();
+                var report = await _reportsService.GetDailyReportAsync(reportDate);
+                var settings = await _settingsService.GetAsync();
+                _printerService.PrintDailyReport(report, settings);
+
+                var userId = AuthHelper.GetCurrentUserId();
+                await _auditLogService.LogAsync(userId, "Print", "DailyReport", 0, $"Printed daily report: {reportDate:yyyy-MM-dd}");
+                return Ok(ApiResponse.Ok("Daily report printed successfully"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(ApiResponse.Fail(ex.Message));
+            }
         }
 
         [HttpGet]
@@ -33,6 +65,15 @@ namespace RestaurantPOS.Features.Reports.Controllers
             var reportMonth = month ?? DateTime.Now.Month;
             var report = await _reportsService.GetMonthlyReportAsync(reportYear, reportMonth);
             return Ok(ApiResponse<MonthlySalesReportDto>.Ok(report));
+        }
+
+        [HttpGet]
+        [Route("daily-details")]
+        public async Task<IHttpActionResult> GetDailyDetails([FromUri] DateTime? date = null)
+        {
+            var reportDate = date ?? await _reportsService.GetCurrentBusinessDateAsync();
+            var report = await _reportsService.GetDailyDetailsAsync(reportDate);
+            return Ok(ApiResponse<DailyDetailsDto>.Ok(report));
         }
 
         [HttpGet]

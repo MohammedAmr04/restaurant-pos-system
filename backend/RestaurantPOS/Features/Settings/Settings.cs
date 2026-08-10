@@ -19,5 +19,7 @@ namespace RestaurantPOS.Features.Settings
         public int PaperWidth { get; set; }
         public int PrinterCopies { get; set; }
         public bool PrinterEnabled { get; set; }
+        public string ShiftStart { get; set; }
+        public string ShiftEnd { get; set; }
     }
 }

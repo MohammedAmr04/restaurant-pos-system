@@ -34,8 +34,8 @@ namespace RestaurantPOS.Features.MenuItems
 
         public async Task<int> CreateAsync(MenuItem menuItem)
         {
-            var sql = @"INSERT INTO MenuItems (CategoryId, Name, Price, Image, Notes, DisplayOrder, IsAvailable, CreatedAt) 
-                       VALUES (@CategoryId, @Name, @Price, @Image, @Notes, @DisplayOrder, @IsAvailable, @CreatedAt);
+            var sql = @"INSERT INTO MenuItems (CategoryId, Name, Price, Image, Notes, DisplayOrder, IsAvailable, IsForeign, CreatedAt) 
+                       VALUES (@CategoryId, @Name, @Price, @Image, @Notes, @DisplayOrder, @IsAvailable, @IsForeign, @CreatedAt);
                        SELECT last_insert_rowid();";
             return await _connection.ExecuteScalarAsync<int>(sql, menuItem);
         }
@@ -44,7 +44,7 @@ namespace RestaurantPOS.Features.MenuItems
         {
             var sql = @"UPDATE MenuItems 
                        SET CategoryId = @CategoryId, Name = @Name, Price = @Price, Image = @Image, 
-                           Notes = @Notes, DisplayOrder = @DisplayOrder, IsAvailable = @IsAvailable, UpdatedAt = @UpdatedAt 
+                           Notes = @Notes, DisplayOrder = @DisplayOrder, IsAvailable = @IsAvailable, IsForeign = @IsForeign, UpdatedAt = @UpdatedAt 
                        WHERE Id = @Id";
             var affectedRows = await _connection.ExecuteAsync(sql, menuItem);
             return affectedRows > 0;

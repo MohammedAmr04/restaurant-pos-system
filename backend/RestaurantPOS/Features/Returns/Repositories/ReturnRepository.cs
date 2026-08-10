@@ -27,6 +27,12 @@ namespace RestaurantPOS.Features.Returns
             return await _connection.QueryFirstOrDefaultAsync<Return>(sql, new { Id = id });
         }
 
+        public async Task<Return> GetByOrderIdAsync(int orderId)
+        {
+            var sql = "SELECT * FROM Returns WHERE OrderId = @OrderId ORDER BY CreatedAt DESC LIMIT 1";
+            return await _connection.QueryFirstOrDefaultAsync<Return>(sql, new { OrderId = orderId });
+        }
+
         public async Task<int> CreateAsync(Return returnEntity)
         {
             var sql = @"INSERT INTO Returns (OrderId, UserId, TotalRefund, Reason, CreatedAt) 

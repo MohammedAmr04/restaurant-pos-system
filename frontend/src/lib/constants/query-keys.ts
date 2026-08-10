@@ -17,6 +17,7 @@ export const QUERY_KEYS = {
   EXPENSES: ["expenses"],
   EXPENSE: (id: number) => ["expenses", id],
   REPORTS_DAILY: (date: string) => ["reports", "daily", date],
+  REPORTS_DAILY_DETAILS: (date: string) => ["reports", "daily-details", date],
   REPORTS_MONTHLY: (year: number, month: number) => ["reports", "monthly", year, month],
   REPORTS_CUSTOM: (start: string, end: string) => ["reports", "custom", start, end],
   REPORTS_DELIVERY: (start: string, end: string) => ["reports", "delivery", start, end],

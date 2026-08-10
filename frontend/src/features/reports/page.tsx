@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -12,7 +12,12 @@ import {
   RotateCcw,
   TrendingUp,
   Eye,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Printer,
 } from "lucide-react";
+import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants/routes";
 import { LoadingOverlay } from "@/lib/components/ui/loading-overlay";
 import { EmptyState } from "@/lib/components/ui/empty-state";
@@ -24,6 +29,7 @@ import {
   DialogTitle,
 } from "@/lib/components/ui/dialog";
 import { generateReportPdf } from "@/lib/utils/generate-report-pdf";
+import { generateDailyDetailsPdf } from "@/lib/utils/generate-daily-details-pdf";
 import {
   useDailyReport,
   useMonthlyReport,
@@ -31,9 +37,12 @@ import {
   useDeliveryReport,
   useExpenseReport,
   useReturnsReport,
+  useDailyDetails,
+  usePrintDailyReport,
 } from "./hooks";
+import { useSettings } from "@/features/settings/hooks";
 
-type ReportTab = "daily" | "monthly" | "custom" | "delivery" | "expense" | "returns";
+type ReportTab = "daily" | "dailyDetails" | "monthly" | "custom" | "delivery" | "expense" | "returns";
 
 function getToday() {
   return new Date().toISOString().split("T")[0];
@@ -52,6 +61,56 @@ function formatCurrency(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function getStatusLabel(status: string, t: ReturnType<typeof useTranslations>) {
+  switch (status) {
+    case "Completed":
+      return t("statusCompleted");
+    case "Returned":
+      return t("statusReturned");
+    default:
+      return status;
+  }
+}
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case "Completed":
+      return "bg-green-100 text-green-800";
+    case "Returned":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
+function getOrderTypeLabel(type: string, t: ReturnType<typeof useTranslations>) {
+  switch (type) {
+    case "DineIn":
+      return t("dineIn");
+    case "TakeAway":
+      return t("takeAway");
+    case "Delivery":
+      return t("delivery");
+    default:
+      return type;
+  }
+}
+
+function getPaymentMethodLabel(method: string | null, t: ReturnType<typeof useTranslations>) {
+  switch (method) {
+    case "Cash":
+      return t("cash");
+    case "Visa":
+      return t("visa");
+    case "Instapay":
+      return t("instapay");
+    case "Wallet":
+      return t("wallet");
+    default:
+      return method || "-";
+  }
 }
 
 function SummaryCard({ label, value, icon: Icon }: { label: string; value: string; icon: React.ElementType }) {
@@ -76,6 +135,16 @@ function DailyReportTab() {
   const [date, setDate] = useState(getToday());
   const [viewingDay, setViewingDay] = useState<any>(null);
   const { data, isLoading } = useDailyReport(date);
+  const printDailyReport = usePrintDailyReport();
+
+  const handlePrint = async () => {
+    try {
+      await printDailyReport.mutateAsync(date);
+      toast.success(t("printSuccess"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("printError"));
+    }
+  };
 
   if (isLoading) {
     return <LoadingOverlay isLoading={true} message={t("loading")} />;
@@ -112,11 +181,32 @@ function DailyReportTab() {
                   formatCurrency(data.revenueBeforeExpenses),
                   formatCurrency(data.revenueAfterExpenses),
                 ]],
+                totals: [
+                  { label: t("dineIn"), value: `${data.orderTypes?.dineIn?.count ?? 0} ${t("ordersCount")} / ${formatCurrency(data.orderTypes?.dineIn?.amount ?? 0)}` },
+                  { label: t("delivery"), value: `${data.orderTypes?.delivery?.count ?? 0} ${t("ordersCount")} / ${formatCurrency(data.orderTypes?.delivery?.amount ?? 0)}` },
+                  { label: t("takeAway"), value: `${data.orderTypes?.takeAway?.count ?? 0} ${t("ordersCount")} / ${formatCurrency(data.orderTypes?.takeAway?.amount ?? 0)}` },
+                ],
               })
             }
           >
             PDF {tCommon("export")}
           </Button>
+        )}
+        {data && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handlePrint}
+            disabled={printDailyReport.isPending}
+          >
+            <Printer className="w-4 h-4 ml-2" />
+            {t("printDailyReport")}
+          </Button>
+        )}
+        {data && data.shiftStart && (
+          <span className="text-sm text-gray-500">
+            {t("shift")}: {data.shiftStart} - {data.shiftEnd}
+          </span>
         )}
       </div>
 
@@ -127,6 +217,39 @@ function DailyReportTab() {
             <SummaryCard label={t("totalOrders")} value={data.totalOrders.toString()} icon={BarChart3} />
             <SummaryCard label={t("expenses")} value={`${formatCurrency(data.expenses)} ${tCommon("currency")}`} icon={Receipt} />
             <SummaryCard label={t("netRevenue")} value={`${formatCurrency(data.revenueAfterExpenses)} ${tCommon("currency")}`} icon={TrendingUp} />
+          </div>
+
+          <div className="bg-white shadow rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">{t("orderTypeBreakdown")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-md border border-gray-200 p-4">
+                <p className="text-sm text-gray-500">{t("dineIn")}</p>
+                <p className="mt-2 text-sm text-gray-900">
+                  {t("ordersCount")}: <span className="font-semibold">{data.orderTypes?.dineIn?.count ?? 0}</span>
+                </p>
+                <p className="text-sm text-gray-900">
+                  {t("amount")}: <span className="font-semibold">{formatCurrency(data.orderTypes?.dineIn?.amount ?? 0)}</span>
+                </p>
+              </div>
+              <div className="rounded-md border border-gray-200 p-4">
+                <p className="text-sm text-gray-500">{t("delivery")}</p>
+                <p className="mt-2 text-sm text-gray-900">
+                  {t("ordersCount")}: <span className="font-semibold">{data.orderTypes?.delivery?.count ?? 0}</span>
+                </p>
+                <p className="text-sm text-gray-900">
+                  {t("amount")}: <span className="font-semibold">{formatCurrency(data.orderTypes?.delivery?.amount ?? 0)}</span>
+                </p>
+              </div>
+              <div className="rounded-md border border-gray-200 p-4">
+                <p className="text-sm text-gray-500">{t("takeAway")}</p>
+                <p className="mt-2 text-sm text-gray-900">
+                  {t("ordersCount")}: <span className="font-semibold">{data.orderTypes?.takeAway?.count ?? 0}</span>
+                </p>
+                <p className="text-sm text-gray-900">
+                  {t("amount")}: <span className="font-semibold">{formatCurrency(data.orderTypes?.takeAway?.amount ?? 0)}</span>
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -197,6 +320,232 @@ function DailyReportTab() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function DailyDetailsTab() {
+  const t = useTranslations("reports");
+  const tCommon = useTranslations("common");
+  const tInvoices = useTranslations("invoices");
+  const [date, setDate] = useState(getToday());
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const { data, isLoading } = useDailyDetails(date);
+  const { data: settings } = useSettings();
+
+  const handleExport = async () => {
+    if (!data) return;
+    const dateDisplay = new Date(data.businessDate).toLocaleDateString("ar-EG");
+    await generateDailyDetailsPdf({
+      title: t("dailyDetails"),
+      date: dateDisplay,
+      invoices: data.invoices.map((invoice) => ({
+        invoiceNumber: invoice.invoiceNumber,
+        orderType: getOrderTypeLabel(invoice.orderType, tInvoices),
+        status: getStatusLabel(invoice.status, tInvoices),
+        createdAt: invoice.createdAt,
+        cashier: invoice.cashier,
+        customerName: invoice.customerName,
+        paymentMethod: getPaymentMethodLabel(invoice.paymentMethod, tInvoices),
+        subtotal: invoice.subtotal,
+        discountValue: invoice.discountValue,
+        serviceCharge: invoice.serviceCharge,
+        tax: invoice.tax,
+        grandTotal: invoice.grandTotal,
+        isReturned: invoice.isReturned,
+        refundAmount: invoice.refundAmount,
+        returnReason: invoice.returnReason,
+        returnedItems: invoice.returnedItems,
+        items: invoice.items.map((item) => ({
+          menuItemName: item.menuItemName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+      })),
+      totals: {
+        totalOrders: data.totalOrders,
+        completedOrders: data.completedOrders,
+        returnedOrders: data.returnedOrders,
+        grossSales: data.grossSales,
+        returns: data.returns,
+        discounts: data.discounts,
+        serviceCharges: data.serviceCharges,
+        tax: data.tax,
+        expenses: data.expenses,
+        net: data.net,
+      },
+      labels: {
+        restaurantName: settings?.restaurantName || t("title"),
+        title: t("dailyDetails"),
+        date: t("date"),
+        createdOn: t("createdOn"),
+        invoiceNumber: t("invoiceNumberCol"),
+        time: t("timeCol"),
+        orderType: t("orderType"),
+        cashier: t("cashierCol"),
+        customer: t("customerCol"),
+        paymentMethod: t("paymentMethodCol"),
+        status: t("statusCol"),
+        items: t("items"),
+        itemName: t("itemName"),
+        quantity: t("quantity"),
+        unitPrice: t("unitPrice"),
+        total: t("total"),
+        subtotal: t("subtotal"),
+        discount: t("discount"),
+        serviceCharge: t("serviceCharge"),
+        tax: t("tax"),
+        grandTotal: t("grandTotal"),
+        returned: t("returnedBadge"),
+        refundAmount: t("refundAmountCol"),
+        reason: t("returnReason"),
+        returnedProducts: t("returnedProducts"),
+        summary: t("summaryTitle"),
+        totalOrders: t("totalOrders"),
+        completedOrders: t("completedOrders"),
+        returnedOrders: t("returnedOrders"),
+        grossSales: t("grossSales"),
+        returns: t("returns"),
+        expenses: t("expenses"),
+        net: t("netRevenue"),
+        generalCustomer: tInvoices("generalCustomer"),
+        notAvailable: t("notAvailable"),
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <LoadingOverlay isLoading={true} message={t("loadingDailyDetails")} />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium text-gray-700">{t("date")}</label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {data && (
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            PDF {tCommon("export")}
+          </Button>
+        )}
+      </div>
+
+      {data && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <SummaryCard label={t("grossSales")} value={`${formatCurrency(data.grossSales)} ${tCommon("currency")}`} icon={TrendingUp} />
+            <SummaryCard label={t("totalOrders")} value={data.totalOrders.toString()} icon={BarChart3} />
+            <SummaryCard label={t("returnedOrders")} value={data.returnedOrders.toString()} icon={RotateCcw} />
+            <SummaryCard label={t("expenses")} value={`${formatCurrency(data.expenses)} ${tCommon("currency")}`} icon={Receipt} />
+            <SummaryCard label={t("netRevenue")} value={`${formatCurrency(data.net)} ${tCommon("currency")}`} icon={TrendingUp} />
+          </div>
+
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("invoiceNumberCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("timeCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("cashierCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("customerCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("paymentMethodCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("total")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t("statusCol")}</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{tCommon("actions")}</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.invoices.map((invoice) => (
+                  <Fragment key={invoice.id}>
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{invoice.invoiceNumber}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(invoice.createdAt).toLocaleTimeString("ar-EG")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{invoice.cashier}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {invoice.customerName || tInvoices("generalCustomer")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {getPaymentMethodLabel(invoice.paymentMethod, tInvoices)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(invoice.grandTotal)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(invoice.status)}`}>
+                          {getStatusLabel(invoice.status, tInvoices)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                        <Button variant="ghost" size="sm" onClick={() => setExpanded(expanded === invoice.id ? null : invoice.id)}>
+                          {expanded === invoice.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </Button>
+                      </td>
+                    </tr>
+                    {expanded === invoice.id && (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-4 bg-gray-50">
+                          <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                            <span className="text-gray-500">{t("orderType")}: <span className="font-medium text-gray-900">{getOrderTypeLabel(invoice.orderType, tInvoices)}</span></span>
+                            <span className="text-gray-500">{t("subtotal")}: <span className="font-medium text-gray-900">{formatCurrency(invoice.subtotal)}</span></span>
+                            <span className="text-gray-500">{t("discount")}: <span className="font-medium text-gray-900">-{formatCurrency(invoice.discountValue)}</span></span>
+                            <span className="text-gray-500">{t("serviceCharge")}: <span className="font-medium text-gray-900">{formatCurrency(invoice.serviceCharge)}</span></span>
+                            <span className="text-gray-500">{t("tax")}: <span className="font-medium text-gray-900">{formatCurrency(invoice.tax)}</span></span>
+                          </div>
+                          {invoice.isReturned && (
+                            <div className="mb-3 rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
+                              {t("returnedBadge")} — {t("refundAmountCol")}: {formatCurrency(invoice.refundAmount)}
+                              {invoice.returnedItems && (
+                                <div className="mt-1">{t("returnedProducts")}: {invoice.returnedItems}</div>
+                              )}
+                              {invoice.returnReason && (
+                                <div className="mt-1">{t("returnReason")}: {invoice.returnReason}</div>
+                              )}
+                            </div>
+                          )}
+                          <div className="rounded-lg border border-gray-200 overflow-hidden">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-100">
+                                <tr>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t("itemName")}</th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t("quantity")}</th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t("unitPrice")}</th>
+                                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t("total")}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-100">
+                                {invoice.items.map((item, idx) => (
+                                  <tr key={idx}>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{item.menuItemName}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{item.quantity}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{formatCurrency(item.unitPrice)}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{formatCurrency(item.total)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {data === null && (
+        <EmptyState title={t("noInvoicesTitle")} description={t("noInvoicesDescription")} />
+      )}
     </div>
   );
 }
@@ -810,6 +1159,7 @@ export default function ReportsPage() {
 
   const TABS: { key: ReportTab; label: string; icon: React.ElementType }[] = [
     { key: "daily", label: t("daily"), icon: Calendar },
+    { key: "dailyDetails", label: t("dailyDetails"), icon: FileText },
     { key: "monthly", label: t("monthly"), icon: BarChart3 },
     { key: "custom", label: t("custom"), icon: TrendingUp },
     { key: "delivery", label: t("delivery"), icon: Truck },
@@ -821,6 +1171,8 @@ export default function ReportsPage() {
     switch (activeTab) {
       case "daily":
         return <DailyReportTab />;
+      case "dailyDetails":
+        return <DailyDetailsTab />;
       case "monthly":
         return <MonthlyReportTab />;
       case "custom":

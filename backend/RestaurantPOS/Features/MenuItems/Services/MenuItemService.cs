@@ -56,6 +56,7 @@ namespace RestaurantPOS.Features.MenuItems
                 Notes = dto.Notes,
                 DisplayOrder = dto.DisplayOrder,
                 IsAvailable = true,
+                IsForeign = dto.IsForeign,
                 CreatedAt = DateTime.Now
             };
 
@@ -91,6 +92,7 @@ namespace RestaurantPOS.Features.MenuItems
             existingItem.Image = dto.Image;
             existingItem.Notes = dto.Notes;
             existingItem.DisplayOrder = dto.DisplayOrder;
+            existingItem.IsForeign = dto.IsForeign;
             existingItem.UpdatedAt = DateTime.Now;
 
             await _menuItemRepository.UpdateAsync(existingItem);
@@ -137,7 +139,8 @@ namespace RestaurantPOS.Features.MenuItems
                 Image = menuItem.Image,
                 Notes = menuItem.Notes,
                 DisplayOrder = menuItem.DisplayOrder,
-                IsAvailable = menuItem.IsAvailable
+                IsAvailable = menuItem.IsAvailable,
+                IsForeign = menuItem.IsForeign
             };
         }
     }

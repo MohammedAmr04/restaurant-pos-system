@@ -42,6 +42,8 @@ namespace RestaurantPOS.Features.Settings
             settings.PaperWidth = dto.PaperWidth > 0 ? dto.PaperWidth : 80;
             settings.PrinterCopies = dto.PrinterCopies > 0 ? dto.PrinterCopies : 1;
             settings.PrinterEnabled = dto.PrinterEnabled;
+            settings.ShiftStart = !string.IsNullOrWhiteSpace(dto.ShiftStart) ? dto.ShiftStart : Shared.BusinessDayHelper.DefaultShiftStart;
+            settings.ShiftEnd = !string.IsNullOrWhiteSpace(dto.ShiftEnd) ? dto.ShiftEnd : Shared.BusinessDayHelper.DefaultShiftEnd;
             settings.UpdatedAt = DateTime.Now;
 
             await _settingsRepository.UpdateAsync(settings);
@@ -68,7 +70,9 @@ namespace RestaurantPOS.Features.Settings
                 PrinterName = settings.PrinterName ?? "",
                 PaperWidth = settings.PaperWidth > 0 ? settings.PaperWidth : 80,
                 PrinterCopies = settings.PrinterCopies > 0 ? settings.PrinterCopies : 1,
-                PrinterEnabled = settings.PrinterEnabled
+                PrinterEnabled = settings.PrinterEnabled,
+                ShiftStart = settings.ShiftStart ?? Shared.BusinessDayHelper.DefaultShiftStart,
+                ShiftEnd = settings.ShiftEnd ?? Shared.BusinessDayHelper.DefaultShiftEnd
             };
         }
     }

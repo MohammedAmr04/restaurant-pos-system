@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Pencil, Trash2, ArrowRight, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowRight, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
@@ -35,6 +35,7 @@ export default function MenuItemsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: menuItems, isLoading: isLoadingItems } = useMenuItems();
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
@@ -59,6 +60,7 @@ export default function MenuItemsPage() {
       image: undefined,
       notes: undefined,
       displayOrder: 0,
+      isForeign: false,
     },
   });
 
@@ -102,8 +104,16 @@ export default function MenuItemsPage() {
       image: item.image ?? undefined,
       notes: item.notes ?? undefined,
       displayOrder: item.displayOrder,
+      isForeign: item.isForeign,
     });
   };
+
+  const filteredMenuItems = useMemo(() => {
+    if (!menuItems) return [];
+    const q = search.trim().toLowerCase();
+    if (!q) return menuItems;
+    return menuItems.filter((item) => item.name.toLowerCase().includes(q));
+  }, [menuItems, search]);
 
   const categoryOptions =
     categories?.map((c) => ({ value: c.id, label: c.name })) || [];
@@ -133,7 +143,19 @@ export default function MenuItemsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {menuItems && menuItems.length === 0 ? (
+        <div className="bg-white shadow rounded-lg p-4 mb-6">
+          <div className="relative max-w-sm">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pr-9"
+            />
+          </div>
+        </div>
+        {!isLoadingItems && filteredMenuItems.length === 0 ? (
           <EmptyState title={t("emptyTitle")} description={t("emptyDescription")} />
         ) : (
           <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -161,7 +183,7 @@ export default function MenuItemsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {menuItems?.map((item) => (
+                {filteredMenuItems.map((item) => (
                   <tr key={item.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {item.image ? (
@@ -171,7 +193,14 @@ export default function MenuItemsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {item.name}
+                      <span className="flex items-center gap-2">
+                        {item.name}
+                        {item.isForeign && (
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium">
+                            {t("foreignFood")}
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.categoryName}
@@ -284,6 +313,14 @@ export default function MenuItemsPage() {
                 <p className="text-sm text-destructive">{errors.notes.message}</p>
               )}
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("isForeign")}
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <Label>{t("foreignFood")}</Label>
+            </div>
             <div className="flex justify-end gap-3">
               <Button
                 variant="secondary"
@@ -365,6 +402,14 @@ export default function MenuItemsPage() {
               {errors.notes && (
                 <p className="text-sm text-destructive">{errors.notes.message}</p>
               )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("isForeign")}
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <Label>{t("foreignFood")}</Label>
             </div>
             <div className="flex justify-end gap-3">
               <Button

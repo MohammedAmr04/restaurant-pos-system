@@ -7,6 +7,7 @@ namespace RestaurantPOS.Features.Reports
         public DateTime BusinessDate { get; set; }
         public int TotalOrders { get; set; }
         public int CompletedOrders { get; set; }
+        public int ReturnedOrders { get; set; }
         public decimal TotalSales { get; set; }
         public decimal Discounts { get; set; }
         public decimal ServiceCharge { get; set; }
@@ -14,5 +15,8 @@ namespace RestaurantPOS.Features.Reports
         public decimal Expenses { get; set; }
         public decimal RevenueBeforeExpenses { get; set; }
         public decimal RevenueAfterExpenses { get; set; }
+        public string ShiftStart { get; set; }
+        public string ShiftEnd { get; set; }
+        public OrderTypesBreakdownDto OrderTypes { get; set; }
     }
 }

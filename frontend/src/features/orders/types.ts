@@ -1,6 +1,8 @@
 import type { Order, OrderItemDetailDto } from "./hooks";
 import type { MenuItem } from "@/features/menu-items/hooks";
 
+export type FoodType = "normal" | "foreign";
+
 export interface CartItem {
   menuItemId: number;
   menuItemName: string;
@@ -11,6 +13,7 @@ export interface CartItem {
 
 export interface POSState {
   orderType: string;
+  foodType: FoodType;
   selectedTableId: number | null;
   selectedCustomerId: number | null;
   selectedRiderId: number | null;

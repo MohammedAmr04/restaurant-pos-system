@@ -8,5 +8,6 @@ namespace RestaurantPOS.Features.MenuItems
         public string Image { get; set; }
         public string Notes { get; set; }
         public int DisplayOrder { get; set; }
+        public bool IsForeign { get; set; }
     }
 }

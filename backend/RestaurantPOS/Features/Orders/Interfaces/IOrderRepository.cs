@@ -13,6 +13,6 @@ namespace RestaurantPOS.Features.Orders
         Task<int> CreateAsync(Order order);
         Task<bool> UpdateAsync(Order order);
         Task<bool> DeleteAsync(int id);
-        Task<string> GetNextInvoiceNumberAsync();
+        Task<string> GetNextInvoiceNumberAsync(DateTime businessDate);
     }
 }

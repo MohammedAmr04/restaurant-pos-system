@@ -41,11 +41,12 @@ import {
   useCompleteOrder,
   useResumeOrder,
   useDeleteOrder,
+  usePrintKitchen,
   Order,
 } from "./hooks";
 import type { MenuItem } from "@/features/menu-items/hooks";
 import { toast } from "sonner";
-import type { CartItem } from "./types";
+import type { CartItem, FoodType } from "./types";
 import { OrderPanel } from "./components/OrderPanel";
 import { MenuPanel } from "./components/MenuPanel";
 import { AddCustomerDialog } from "./components/AddCustomerDialog";
@@ -56,6 +57,7 @@ export default function POSPage() {
   const tCommon = useTranslations("common");
 
   const [orderType, setOrderType] = useState<string>(ORDER_TYPE.DINE_IN);
+  const [foodType, setFoodType] = useState<FoodType>("normal");
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [selectedRiderId, setSelectedRiderId] = useState<number | null>(null);
@@ -97,6 +99,7 @@ export default function POSPage() {
   const completeOrderMutation = useCompleteOrder();
   const resumeOrderMutation = useResumeOrder();
   const deleteOrderMutation = useDeleteOrder();
+  const printKitchenMutation = usePrintKitchen();
 
   const categories = useMemo(() => {
     if (!menuItems) return [];
@@ -113,11 +116,12 @@ export default function POSPage() {
     if (!menuItems) return [];
     return menuItems.filter((item: MenuItem) => {
       if (!item.isAvailable) return false;
+      if (foodType === "foreign" ? !item.isForeign : item.isForeign) return false;
       if (categoryFilter && item.categoryId !== categoryFilter) return false;
       if (menuSearch && !item.name.includes(menuSearch)) return false;
       return true;
     });
-  }, [menuItems, menuSearch, categoryFilter]);
+  }, [menuItems, menuSearch, categoryFilter, foodType]);
 
   const cartSubtotal = useMemo(() => {
     if (serverOrder) return serverOrder.subtotal;
@@ -149,6 +153,7 @@ export default function POSPage() {
     setSelectedRiderId(null);
     setDiscountValue(0);
     setServiceChargeValue(0);
+    setFoodType("normal");
   };
 
   const handleOrderTypeChange = (type: string) => {
@@ -221,6 +226,7 @@ export default function POSPage() {
     }));
     const orderData = {
       orderType,
+      isForeign: foodType === "foreign",
       ...(selectedTableId && { tableId: selectedTableId }),
       ...(selectedCustomerId && { customerId: selectedCustomerId }),
       ...(selectedRiderId && { deliveryRiderId: selectedRiderId }),
@@ -295,6 +301,7 @@ export default function POSPage() {
     await resumeOrderMutation.mutateAsync(order.id);
     setActiveOrderId(order.id);
     setOrderType(order.orderType);
+    setFoodType(order.isForeign ? "foreign" : "normal");
     setSelectedTableId(order.tableId);
     setSelectedCustomerId(order.customerId);
     setSelectedRiderId(order.deliveryRiderId);
@@ -322,6 +329,16 @@ export default function POSPage() {
     setDeletingOrder(null);
     if (serverOrder?.id === deletingOrder.id) {
       resetForm();
+    }
+  };
+
+  const handlePrintKitchen = async () => {
+    if (!serverOrder) return;
+    try {
+      await printKitchenMutation.mutateAsync(serverOrder.id);
+      toast.success(tCommon("success"));
+    } catch (error: any) {
+      toast.error(error.message || t("printKitchenError"));
     }
   };
 
@@ -369,6 +386,8 @@ export default function POSPage() {
           <OrderPanel
             orderType={orderType}
             onOrderTypeChange={handleOrderTypeChange}
+            foodType={foodType}
+            onFoodTypeChange={setFoodType}
             selectedTableId={selectedTableId}
             onTableChange={setSelectedTableId}
             selectedCustomerId={selectedCustomerId}
@@ -390,6 +409,8 @@ export default function POSPage() {
             onOpenDiscount={() => setIsDiscountOpen(true)}
             onOpenServiceCharge={() => setIsServiceChargeOpen(true)}
             onOpenPayment={openPaymentDialog}
+            onPrintKitchen={handlePrintKitchen}
+            isPrintingKitchen={printKitchenMutation.isPending}
             onHoldOrder={handleHoldOrder}
             onCreateOrder={handleCreateOrder}
             onCancelOrder={resetForm}

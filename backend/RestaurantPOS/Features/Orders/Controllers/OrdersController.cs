@@ -74,6 +74,31 @@ namespace RestaurantPOS.Features.Orders.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("{id:int}/print-kitchen")]
+        public async Task<IHttpActionResult> PrintKitchen(int id)
+        {
+            try
+            {
+                var order = await _orderService.GetByIdAsync(id);
+                if (order == null)
+                {
+                    return Ok(ApiResponse.Fail("Order not found"));
+                }
+
+                var settings = await _settingsService.GetAsync();
+                _printerService.PrintKitchenCopy(order, settings);
+
+                var userId = AuthHelper.GetCurrentUserId();
+                await _auditLogService.LogAsync(userId, "Print", "Order", order.Id, $"Printed kitchen receipt: {order.InvoiceNumber}");
+                return Ok(ApiResponse.Ok("Kitchen receipt printed successfully"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(ApiResponse.Fail(ex.Message));
+            }
+        }
+
         [HttpGet]
         [Route("{id:int}")]
         public async Task<IHttpActionResult> GetById(int id)

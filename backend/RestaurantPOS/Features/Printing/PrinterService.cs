@@ -82,9 +82,12 @@ namespace RestaurantPOS.Features.Printing
 
             for (int i = 0; i < copies; i++)
             {
-                var kitchenReceipt = KitchenReceiptBuilder.Build(order, settings);
-                var kitchenBytes = ReceiptRenderer.RenderToBytes(kitchenReceipt);
-                PrintReceipt(kitchenBytes, "Kitchen Copy");
+                if (order.OrderType != "DineIn")
+                {
+                    var kitchenReceipt = KitchenReceiptBuilder.Build(order, settings);
+                    var kitchenBytes = ReceiptRenderer.RenderToBytes(kitchenReceipt);
+                    PrintReceipt(kitchenBytes, "Kitchen Copy");
+                }
 
                 switch (order.OrderType)
                 {
@@ -111,6 +114,30 @@ namespace RestaurantPOS.Features.Printing
             var cashierReceipt = CashierReceiptBuilder.Build(order, settings);
             var cashierBytes = ReceiptRenderer.RenderToBytes(cashierReceipt);
             PrintReceipt(cashierBytes, "Cashier Copy (Reprint)");
+        }
+
+        public void PrintKitchenCopy(Orders.OrderDto order, Settings.SettingsDto settings)
+        {
+            if (settings != null)
+            {
+                ConfigurePrinter(settings.PrinterName, settings.PrinterEnabled);
+            }
+
+            var kitchenReceipt = KitchenReceiptBuilder.Build(order, settings);
+            var kitchenBytes = ReceiptRenderer.RenderToBytes(kitchenReceipt);
+            PrintReceipt(kitchenBytes, "Kitchen Copy (Manual)");
+        }
+
+        public void PrintDailyReport(Reports.DailySalesReportDto report, Settings.SettingsDto settings)
+        {
+            if (settings != null)
+            {
+                ConfigurePrinter(settings.PrinterName, settings.PrinterEnabled);
+            }
+
+            var dailyReport = DailyReportReceiptBuilder.Build(report, settings);
+            var dailyReportBytes = ReceiptRenderer.RenderDailyReportToBytes(dailyReport);
+            PrintReceipt(dailyReportBytes, "Daily Report Copy");
         }
 
     }

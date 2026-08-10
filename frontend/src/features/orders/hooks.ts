@@ -12,6 +12,14 @@ export interface OrderItemDetailDto {
   total: number;
 }
 
+export interface ReturnedItem {
+  id: number;
+  orderItemId: number;
+  menuItemName: string;
+  quantity: number;
+  refundAmount: number;
+}
+
 export interface Order {
   id: number;
   invoiceNumber: string;
@@ -33,10 +41,16 @@ export interface Order {
   grandTotal: number;
   paymentMethod: string | null;
   paidAmount: number;
+  isForeign: boolean;
   businessDate: string;
   completedAt: string | null;
   createdAt: string;
   items: OrderItemDetailDto[];
+  isReturned: boolean;
+  returnDate: string | null;
+  returnReason: string | null;
+  refundAmount: number;
+  returnedItems: ReturnedItem[] | null;
 }
 
 export interface CreateOrderDto {
@@ -44,6 +58,7 @@ export interface CreateOrderDto {
   customerId?: number;
   tableId?: number;
   deliveryRiderId?: number;
+  isForeign?: boolean;
   items: { menuItemId: number; quantity: number; notes?: string }[];
 }
 
@@ -329,6 +344,18 @@ export function useDeleteOrder() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HOLD_ORDERS });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TABLES });
+    },
+  });
+}
+
+export function usePrintKitchen() {
+  return useMutation({
+    mutationFn: async (orderId: number) => {
+      const response = await apiClient.post(`/orders/${orderId}/print-kitchen`);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response;
     },
   });
 }

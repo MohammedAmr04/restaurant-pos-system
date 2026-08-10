@@ -387,6 +387,48 @@ export default function InvoicesPage() {
                 </div>
               </div>
 
+              {viewingInvoice.isReturned && (
+                <div className="border-t pt-4 space-y-2">
+                  <p className="text-sm text-red-600 font-semibold">{t("returnedItems")}</p>
+                  <div className="flex justify-between text-sm">
+                    <span>{t("returnDate")}</span>
+                    <span className="font-medium">
+                      {viewingInvoice.returnDate
+                        ? new Date(viewingInvoice.returnDate).toLocaleDateString("ar-EG")
+                        : "—"}
+                    </span>
+                  </div>
+                  {viewingInvoice.returnReason && (
+                    <div className="flex justify-between text-sm">
+                      <span>{t("returnReason")}</span>
+                      <span className="font-medium">{viewingInvoice.returnReason}</span>
+                    </div>
+                  )}
+                  <table className="min-w-full divide-y divide-gray-200 border border-red-200 rounded-md">
+                    <thead className="bg-red-50">
+                      <tr>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">{t("itemName")}</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">{t("quantity")}</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">{t("refundAmount")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {(viewingInvoice.returnedItems || []).map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-2 text-sm">{item.menuItemName}</td>
+                          <td className="px-4 py-2 text-sm">{item.quantity}</td>
+                          <td className="px-4 py-2 text-sm">{formatCurrency(item.refundAmount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="flex justify-between text-sm font-semibold text-red-600">
+                    <span>{t("totalRefund")}</span>
+                    <span>{formatCurrency(viewingInvoice.refundAmount)}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="secondary" onClick={() => handlePrint(viewingInvoice)}>
                   <Printer className="w-4 h-4 ml-2" />

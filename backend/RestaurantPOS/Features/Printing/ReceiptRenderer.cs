@@ -13,6 +13,7 @@ namespace RestaurantPOS.Features.Printing
         private const int PaperWidth80mm = 576;
         private const int Margin = 15;
         private const string FontFamily = "Tahoma";
+        private const string EnglishRestaurantName = "Beit El-Moez Grill & Mashawy";
 
         // Typography hierarchy
         private const float RestaurantNameSize = 28;
@@ -40,6 +41,13 @@ namespace RestaurantPOS.Features.Printing
         {
             Alignment = StringAlignment.Far,
             LineAlignment = StringAlignment.Near,
+        };
+
+        private static readonly StringFormat EnglishFormat = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Near,
+            Trimming = StringTrimming.Word,
         };
 
         private static readonly StringFormat CenterFormat = new StringFormat
@@ -73,6 +81,110 @@ namespace RestaurantPOS.Features.Printing
             }
         }
 
+        public static byte[] RenderDailyReportToBytes(DailyReportModel report)
+        {
+            using (var bitmap = RenderDailyReport(report))
+            using (var stream = new MemoryStream())
+            {
+                bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                return stream.ToArray();
+            }
+        }
+
+        private static Bitmap RenderDailyReport(DailyReportModel report)
+        {
+            int contentWidth = PaperWidth80mm - (Margin * 2);
+            var canvas = new Bitmap(PaperWidth80mm, 6000);
+
+            using (var g = Graphics.FromImage(canvas))
+            {
+                g.Clear(Color.White);
+                g.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+
+                int y = Margin;
+
+                // Restaurant Name
+                y = DrawText(g, report.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Report Title
+                y = DrawText(g, "التقرير اليومي", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapLarge;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Business Date & Shift
+                var arabicDay = GetArabicDayName(report.BusinessDate);
+                y = DrawText(g, $"تاريخ اليوم: {report.BusinessDate:yyyy/MM/dd}  {arabicDay}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الفترة: {report.ShiftStart} - {report.ShiftEnd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"وقت الطباعة: {report.PrintedAt:yyyy/MM/dd hh:mm tt}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Report Fields
+                y = DrawText(g, $"إجمالي الطلبات: {ToArabicNumerals(report.TotalOrders.ToString())}", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات المكتملة: {ToArabicNumerals(report.CompletedOrders.ToString())}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات المرجعة: {ToArabicNumerals(report.ReturnedOrders.ToString())}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"إجمالي المبيعات: {ToArabicNumerals(report.TotalSales.ToString())}", TotalsSize, FontStyle.Regular,Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الخصومات: {report.Discounts:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"رسوم الخدمة: {report.ServiceCharge:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المرتجعات: {report.Returns:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المصروفات: {report.Expenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الإيراد قبل المصروفات: {report.RevenueBeforeExpenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الإيراد بعد المصروفات: {report.RevenueAfterExpenses:F2}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y = DrawText(g, $"رسوم الخدمة: {report.ServiceCharge:F2}", TotalsSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Order Type Breakdown
+                y = DrawText(g, "تفصيل أنواع الطلبات", ItemSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
+                y += SectionGapMedium;
+
+                y = DrawText(g, "صالة", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.DineInCount.ToString())}", ItemSize - 2, FontStyle.Regular ,Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.DineInAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, "توصيل", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.DeliveryCount.ToString())}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.DeliveryAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y = DrawText(g, "تيك أواي", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الطلبات: {ToArabicNumerals(report.TakeAwayCount.ToString())}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"المبلغ: {report.TakeAwayAmount:F2}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+
+                y += SectionGapMedium;
+
+                // Separator
+                y = DrawSeparator(g, y, contentWidth);
+
+                // Footer
+                if (!string.IsNullOrEmpty(report.Address))
+                    y = DrawText(g, report.Address, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                if (!string.IsNullOrEmpty(report.Phone))
+                    y = DrawText(g, report.Phone, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                if (!string.IsNullOrEmpty(report.Phone2))
+                    y = DrawText(g, report.Phone2, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                y = DrawText(g, "Software by brazilyy", FooterSize - 2, FontStyle.Regular, Justify.Center, y, contentWidth, false);
+
+                y += Margin;
+
+                return CropBitmap(canvas, y);
+            }
+        }
+
         private static Bitmap RenderKitchenReceipt(ReceiptModel receipt)
         {
             int contentWidth = PaperWidth80mm - (Margin * 2);
@@ -86,14 +198,14 @@ namespace RestaurantPOS.Features.Printing
                 int y = Margin;
 
                 // Restaurant Name
-                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
                 y += SectionGapLarge;
 
                 // Separator
                 y = DrawSeparator(g, y, contentWidth);
 
                 // Receipt Title
-                y = DrawText(g, "المطبخ", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y = DrawText(g, "المطبخ", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth, false);
                 y += SectionGapLarge;
 
                 // Separator
@@ -101,23 +213,23 @@ namespace RestaurantPOS.Features.Printing
 
                 // Date & Time
                 var arabicDay = GetArabicDayName(receipt.OrderDate);
-                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}  {arabicDay}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
-                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}  {arabicDay}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
+                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 // Order Type
-                y = DrawText(g, $"نوع الطلب: {MapOrderType(receipt.OrderType)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"نوع الطلب: {MapOrderType(receipt.OrderType, false)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 // Order Number
                 if (receipt.DailyOrderNumber > 0)
-                    y = DrawText(g, $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
 
                 // Customer
                 if (!string.IsNullOrEmpty(receipt.CustomerName))
-                    y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 // Table
                 if (receipt.TableNumber.HasValue)
-                    y = DrawText(g, $"الطاولة: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"الطاولة: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 y += SectionGapMedium;
 
@@ -127,10 +239,10 @@ namespace RestaurantPOS.Features.Printing
                 // Items
                 foreach (var item in receipt.Items)
                 {
-                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Bold, Justify.Right, y, contentWidth, false);
 
                     if (!string.IsNullOrEmpty(item.Notes))
-                        y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                        y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, false);
                 }
 
                 y += SectionGapMedium;
@@ -139,11 +251,11 @@ namespace RestaurantPOS.Features.Printing
                 y = DrawSeparator(g, y, contentWidth);
 
                 // Printed At
-                y = DrawText(g, $"تاريخ الطباعة: {receipt.PrintedAt:yyyy/MM/dd hh:mm tt}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"تاريخ الطباعة: {receipt.PrintedAt:yyyy/MM/dd hh:mm tt}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 // Cashier
                 if (!string.IsNullOrEmpty(receipt.CashierName))
-                    y = DrawText(g, $"الكاشير: {receipt.CashierName}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"الكاشير: {receipt.CashierName}", FooterSize, FontStyle.Regular, Justify.Right, y, contentWidth, false);
 
                 y += Margin;
 
@@ -155,6 +267,7 @@ namespace RestaurantPOS.Features.Printing
         {
             int contentWidth = PaperWidth80mm - (Margin * 2);
             var canvas = new Bitmap(PaperWidth80mm, 4000);
+            bool english = receipt.IsForeign;
 
             using (var g = Graphics.FromImage(canvas))
             {
@@ -164,19 +277,25 @@ namespace RestaurantPOS.Features.Printing
                 int y = Margin;
 
                 // Restaurant Name
-                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y = DrawText(g, GetRestaurantName(receipt, english), RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth, english);
                 y += SectionGapLarge;
 
                 // Separator
                 y = DrawSeparator(g, y, contentWidth);
 
                 // Date & Time
-                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
-                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, english
+                        ? $"Date: {receipt.OrderDate:MM/dd/yyyy}"
+                        : $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}",
+                    InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
+                y = DrawText(g, $"{(english ? "Time" : "الوقت")}: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 // Order Number
                 if (receipt.DailyOrderNumber > 0)
-                    y = DrawText(g, $"رقم الطلب: {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, english
+                            ? $"Order No: {receipt.DailyOrderNumber}"
+                            : $"رقم الطلب: {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}",
+                        InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
                 y += SectionGapMedium;
 
@@ -186,7 +305,7 @@ namespace RestaurantPOS.Features.Printing
                 // Items
                 foreach (var item in receipt.Items)
                 {
-                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{item.Quantity} x {item.Name}", ItemSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
                 }
 
                 y += SectionGapMedium;
@@ -204,6 +323,7 @@ namespace RestaurantPOS.Features.Printing
         {
             int contentWidth = PaperWidth80mm - (Margin * 2);
             var canvas = new Bitmap(PaperWidth80mm, 4000);
+            bool english = receipt.IsForeign;
 
             using (var g = Graphics.FromImage(canvas))
             {
@@ -213,14 +333,14 @@ namespace RestaurantPOS.Features.Printing
                 int y = Margin;
 
                 // ── Restaurant Name ──
-                y = DrawText(g, receipt.RestaurantName, RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y = DrawText(g, GetRestaurantName(receipt, english), RestaurantNameSize, FontStyle.Bold, Justify.Center, y, contentWidth, english);
                 y += SectionGapLarge;
 
                 // Separator
                 y = DrawSeparator(g, y, contentWidth);
 
                 // ── Receipt Title ──
-                y = DrawText(g, "فاتورة الكاشير", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                y = DrawText(g, english ? "CASHIER INVOICE" : "فاتورة الكاشير", ReceiptTitleSize, FontStyle.Bold, Justify.Center, y, contentWidth, english);
                 y += SectionGapLarge;
 
                 // Separator
@@ -228,32 +348,41 @@ namespace RestaurantPOS.Features.Printing
 
                 // ── Invoice Info ──
                 if (!string.IsNullOrEmpty(receipt.InvoiceNumber))
-                    y = DrawText(g, $"رقم الفاتورة: {receipt.InvoiceNumber}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, english
+                            ? $"Invoice: {receipt.InvoiceNumber}"
+                            : $"رقم الفاتورة: {receipt.InvoiceNumber}",
+                        InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
                 if (receipt.DailyOrderNumber > 0)
-                    y = DrawText(g, $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}", InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, english
+                            ? $"Order No: {receipt.DailyOrderNumber}"
+                            : $"طلب رقم {ToArabicNumerals(receipt.DailyOrderNumber.ToString())}",
+                        InvoiceInfoSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
-                y = DrawText(g, $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
-                y = DrawText(g, $"الوقت: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
-                y = DrawText(g, $"نوع الطلب: {MapOrderType(receipt.OrderType)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, english
+                        ? $"Date: {receipt.OrderDate:MM/dd/yyyy}"
+                        : $"التاريخ: {receipt.OrderDate:yyyy/MM/dd}",
+                    InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
+                y = DrawText(g, $"{(english ? "Time" : "الوقت")}: {receipt.OrderDate:hh:mm tt}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
+                y = DrawText(g, $"{(english ? "Order Type" : "نوع الطلب")}: {MapOrderType(receipt.OrderType, english)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.CashierName))
-                    y = DrawText(g, $"الكاشير: {receipt.CashierName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Cashier" : "الكاشير")}: {receipt.CashierName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.CustomerName))
-                    y = DrawText(g, $"العميل: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Customer" : "العميل")}: {receipt.CustomerName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.CustomerPhone))
-                    y = DrawText(g, $"هاتف العميل: {receipt.CustomerPhone}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Customer Phone" : "هاتف العميل")}: {receipt.CustomerPhone}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.CustomerAddress))
-                    y = DrawText(g, $"عنوان العميل: {receipt.CustomerAddress}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Customer Address" : "عنوان العميل")}: {receipt.CustomerAddress}", InvoiceInfoSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.DeliveryRiderName))
-                    y = DrawText(g, $"السائق: {receipt.DeliveryRiderName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Rider" : "السائق")}: {receipt.DeliveryRiderName}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 if (receipt.TableNumber.HasValue)
-                    y = DrawText(g, $"الطاولة: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Table" : "الطاولة")}: {receipt.TableNumber}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 y += SectionGapMedium;
 
@@ -265,10 +394,10 @@ namespace RestaurantPOS.Features.Printing
                 {
                     string itemText = $"{item.Quantity} x {item.Name}";
                     string priceText = $"{item.Total:F2}";
-                    y = DrawDottedLine(g, itemText, priceText, ItemSize, y, contentWidth);
+                    y = DrawDottedLine(g, itemText, priceText, ItemSize, y, contentWidth, english);
 
                     if (!string.IsNullOrEmpty(item.Notes))
-                        y = DrawText(g, $"  ملاحظات: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth);
+                        y = DrawText(g, $"{(english ? "  Notes" : "  ملاحظات")}: {item.Notes}", ItemSize - 2, FontStyle.Regular, Justify.Right, y, contentWidth, english);
                 }
 
                 y += SectionGapMedium;
@@ -277,21 +406,21 @@ namespace RestaurantPOS.Features.Printing
                 y = DrawSeparator(g, y, contentWidth);
 
                 // ── Totals ──
-                y = DrawText(g, $"المجموع الفرعي: {receipt.Subtotal:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"{(english ? "Subtotal" : "المجموع الفرعي")}: {receipt.Subtotal:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
                 if (receipt.Discount > 0)
                 {
                     var discountLabel = receipt.DiscountType == "Percentage"
-                        ? $"الخصم ({receipt.Discount}%): "
-                        : $"الخصم: {receipt.Discount:F2}";
-                    y = DrawText(g, discountLabel, TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                        ? $"{(english ? "Discount" : "الخصم")} ({receipt.Discount}%): "
+                        : $"{(english ? "Discount" : "الخصم")}: {receipt.Discount:F2}";
+                    y = DrawText(g, discountLabel, TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
                 }
 
                 if (receipt.ServiceCharge > 0)
-                    y = DrawText(g, $"رسوم الخدمة: {receipt.ServiceCharge:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                    y = DrawText(g, $"{(english ? "Service Charge" : "رسوم الخدمة")}: {receipt.ServiceCharge:F2}", TotalsSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
                 if (receipt.Tax > 0)
-                    y = DrawItemLine(g, "الضريبة:", $"{receipt.Tax:F2}", TotalsSize, y, contentWidth);
+                    y = DrawItemLine(g, $"{(english ? "Tax" : "الضريبة")}:", $"{receipt.Tax:F2}", TotalsSize, y, contentWidth, english);
 
                 y += SectionGapMedium;
 
@@ -299,13 +428,13 @@ namespace RestaurantPOS.Features.Printing
                 y = DrawSeparator(g, y, contentWidth);
 
                 // ── Grand Total ──
-                y = DrawText(g, $"الإجمالي: {receipt.GrandTotal:F2}", GrandTotalSize, FontStyle.Bold, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"{(english ? "Total" : "الإجمالي")}: {receipt.GrandTotal:F2}", GrandTotalSize, FontStyle.Bold, Justify.Right, y, contentWidth, english);
 
                 // Separator
                 y = DrawSeparator(g, y, contentWidth);
 
                 // ── Payment Method ──
-                y = DrawText(g, $"طريقة الدفع: {MapPaymentMethod(receipt.PaymentMethod)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, $"{(english ? "Payment Method" : "طريقة الدفع")}: {MapPaymentMethod(receipt.PaymentMethod, english)}", InvoiceInfoSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
 
                 y += SectionGapLarge;
 
@@ -314,19 +443,20 @@ namespace RestaurantPOS.Features.Printing
 
                 // ── Footer ──
                 if (!string.IsNullOrEmpty(receipt.Address))
-                    y = DrawText(g, receipt.Address, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+                    y = DrawText(g, receipt.Address, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.Phone))
-                    y = DrawText(g, receipt.Phone, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+                    y = DrawText(g, receipt.Phone, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, english);
 
                 if (!string.IsNullOrEmpty(receipt.Phone2))
-                    y = DrawText(g, receipt.Phone2, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth);
+                    y = DrawText(g, receipt.Phone2, FooterSize, FontStyle.Regular, Justify.Center, y, contentWidth, english);
 
-                if (!string.IsNullOrEmpty(receipt.FooterText))
-                    y = DrawText(g, receipt.FooterText, FooterSize, FontStyle.Bold, Justify.Center, y, contentWidth);
+                var footerText = english ? "Thank you for your visit" : receipt.FooterText;
+                if (!string.IsNullOrEmpty(footerText))
+                    y = DrawText(g, footerText, FooterSize, FontStyle.Bold, Justify.Center, y, contentWidth, english);
 
-                y = DrawText(g, "Software by brazilyy", FooterSize - 2, FontStyle.Regular, Justify.Center, y, contentWidth);
-                y = DrawText(g, "01101352017", FooterSize - 4, FontStyle.Regular, Justify.Center, y, contentWidth);
+                y = DrawText(g, "Software by brazilyy", FooterSize - 2, FontStyle.Regular, Justify.Center, y, contentWidth, english);
+                y = DrawText(g, "01101352017", FooterSize - 4, FontStyle.Regular, Justify.Center, y, contentWidth, english);
 
                 y += Margin;
 
@@ -336,7 +466,7 @@ namespace RestaurantPOS.Features.Printing
 
         // ── Drawing helpers ──
 
-        private static int DrawText(Graphics g, string text, float fontSize, FontStyle style, Justify justify, int y, int contentWidth)
+        private static int DrawText(Graphics g, string text, float fontSize, FontStyle style, Justify justify, int y, int contentWidth, bool english)
         {
             using (var font = new Font(FontFamily, fontSize, style))
             {
@@ -348,8 +478,8 @@ namespace RestaurantPOS.Features.Printing
                     case Justify.Left: align = StringAlignment.Far; break;
                 }
 
-                var format = new StringFormat(RtlFormat) { Alignment = align };
-                var size = g.MeasureString(text, font, contentWidth, RtlFormat);
+                var format = new StringFormat(english ? EnglishFormat : RtlFormat) { Alignment = align };
+                var size = g.MeasureString(text, font, contentWidth, format);
                 int h = (int)Math.Ceiling(size.Height);
 
                 g.DrawString(text, font, Brushes.Black,
@@ -359,11 +489,12 @@ namespace RestaurantPOS.Features.Printing
             }
         }
 
-        private static int DrawItemLine(Graphics g, string rightRtlText, string leftLtrText, float fontSize, int y, int contentWidth)
+        private static int DrawItemLine(Graphics g, string rightRtlText, string leftLtrText, float fontSize, int y, int contentWidth, bool english)
         {
             using (var font = new Font(FontFamily, fontSize, FontStyle.Regular))
             {
-                var rightSize = g.MeasureString(rightRtlText, font, contentWidth, RtlFormat);
+                var labelFormat = english ? EnglishFormat : RtlFormat;
+                var rightSize = g.MeasureString(rightRtlText, font, contentWidth, labelFormat);
                 var leftSize = g.MeasureString(leftLtrText, font, contentWidth, LtrFormat);
 
                 int rightWidth = (int)Math.Ceiling(rightSize.Width);
@@ -373,7 +504,7 @@ namespace RestaurantPOS.Features.Printing
                 {
                     // Draw right text (RTL) from right edge
                     g.DrawString(rightRtlText, font, Brushes.Black,
-                        new RectangleF(Margin, y, contentWidth, rightSize.Height + 4), RtlFormat);
+                        new RectangleF(Margin, y, contentWidth, rightSize.Height + 4), labelFormat);
 
                     // Draw left text (LTR) from left edge
                     g.DrawString(leftLtrText, font, Brushes.Black,
@@ -384,8 +515,8 @@ namespace RestaurantPOS.Features.Printing
                 else
                 {
                     // Fallback: stack vertically
-                    int y1 = DrawText(g, rightRtlText, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth);
-                    return DrawText(g, leftLtrText, fontSize, FontStyle.Regular, Justify.Left, y1, contentWidth);
+                    int y1 = DrawText(g, rightRtlText, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
+                    return DrawText(g, leftLtrText, fontSize, FontStyle.Regular, Justify.Left, y1, contentWidth, english);
                 }
             }
         }
@@ -397,20 +528,21 @@ namespace RestaurantPOS.Features.Printing
             return y + SeparatorPadding;
         }
 
-        private static int DrawDottedLine(Graphics g, string leftText, string rightText, float fontSize, int y, int contentWidth)
+        private static int DrawDottedLine(Graphics g, string leftText, string rightText, float fontSize, int y, int contentWidth, bool english)
         {
             using (var font = new Font(FontFamily, fontSize, FontStyle.Regular))
             {
-                var leftSize = g.MeasureString(leftText, font, contentWidth, RtlFormat);
-                var rightSize = g.MeasureString(rightText, font, contentWidth, RtlFormat);
-                var dotSize = g.MeasureString("...", font, contentWidth, RtlFormat);
+                var measureFormat = english ? EnglishFormat : RtlFormat;
+                var leftSize = g.MeasureString(leftText, font, contentWidth, measureFormat);
+                var rightSize = g.MeasureString(rightText, font, contentWidth, measureFormat);
+                var dotSize = g.MeasureString("...", font, contentWidth, measureFormat);
 
                 float usedWidth = leftSize.Width + rightSize.Width;
                 float gap = contentWidth - usedWidth;
                 int dotPairs = Math.Max(1, (int)(gap / dotSize.Width));
 
                 string line = leftText + new string('.', dotPairs * 2) + rightText;
-                y = DrawText(g, line, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth);
+                y = DrawText(g, line, fontSize, FontStyle.Regular, Justify.Right, y, contentWidth, english);
                 return y;
             }
         }
@@ -429,8 +561,25 @@ namespace RestaurantPOS.Features.Printing
 
         // ── Text helpers ──
 
-        private static string MapOrderType(string orderType)
+        private static string GetRestaurantName(ReceiptModel receipt, bool english)
         {
+            if (english) return EnglishRestaurantName;
+            return receipt.RestaurantName;
+        }
+
+        private static string MapOrderType(string orderType, bool english)
+        {
+            if (english)
+            {
+                switch (orderType)
+                {
+                    case "DineIn": return "Dine In";
+                    case "TakeAway": return "Takeaway";
+                    case "Delivery": return "Delivery";
+                    default: return orderType;
+                }
+            }
+
             switch (orderType)
             {
                 case "DineIn": return "صالة";
@@ -440,8 +589,20 @@ namespace RestaurantPOS.Features.Printing
             }
         }
 
-        private static string MapPaymentMethod(string method)
+        private static string MapPaymentMethod(string method, bool english)
         {
+            if (english)
+            {
+                switch (method)
+                {
+                    case "Cash": return "Cash";
+                    case "Visa": return "Visa";
+                    case "Instapay": return "Instapay";
+                    case "Wallet": return "Wallet";
+                    default: return method;
+                }
+            }
+
             switch (method)
             {
                 case "Cash": return "نقدي";

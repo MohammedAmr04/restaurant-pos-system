@@ -17,7 +17,7 @@ import { OrderTotals } from "./OrderTotals";
 import { CustomerSearch } from "./CustomerSearch";
 import { ORDER_TYPE } from "@/lib/constants/order-status";
 import type { Order, OrderItemDetailDto } from "../hooks";
-import type { CartItem } from "../types";
+import type { CartItem, FoodType } from "../types";
 import type { Table } from "@/features/tables/hooks";
 import type { Customer } from "@/features/customers/hooks";
 import type { DeliveryRider } from "@/features/delivery-riders/hooks";
@@ -25,6 +25,8 @@ import type { DeliveryRider } from "@/features/delivery-riders/hooks";
 interface OrderPanelProps {
   orderType: string;
   onOrderTypeChange: (type: string) => void;
+  foodType: FoodType;
+  onFoodTypeChange: (type: FoodType) => void;
   selectedTableId: number | null;
   onTableChange: (id: number | null) => void;
   selectedCustomerId: number | null;
@@ -46,6 +48,8 @@ interface OrderPanelProps {
   onOpenDiscount: () => void;
   onOpenServiceCharge: () => void;
   onOpenPayment: () => void;
+  onPrintKitchen: () => void;
+  isPrintingKitchen: boolean;
   onHoldOrder: () => void;
   onCreateOrder: () => void;
   onCancelOrder: () => void;
@@ -66,6 +70,8 @@ interface OrderPanelProps {
 export function OrderPanel({
   orderType,
   onOrderTypeChange,
+  foodType,
+  onFoodTypeChange,
   selectedTableId,
   onTableChange,
   selectedCustomerId,
@@ -87,6 +93,8 @@ export function OrderPanel({
   onOpenDiscount,
   onOpenServiceCharge,
   onOpenPayment,
+  onPrintKitchen,
+  isPrintingKitchen,
   onHoldOrder,
   onCreateOrder,
   onCancelOrder,
@@ -162,6 +170,32 @@ export function OrderPanel({
               {opt.label}
             </button>
           ))}
+        </div>
+
+        {/* Food Type Toggle */}
+        <div className="mt-2">
+          <p className="text-xs font-medium text-gray-500 mb-1">{t("foodTypeLabel")}</p>
+          <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg">
+            {(
+              [
+                { value: "normal", label: t("normalFood") },
+                { value: "foreign", label: t("foreignFood") },
+              ] as { value: FoodType; label: string }[]
+            ).map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => onFoodTypeChange(opt.value)}
+                disabled={!!activeOrder}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition-all ${
+                  foodType === opt.value
+                    ? "bg-white text-indigo-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                } ${activeOrder ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Selectors */}
@@ -310,6 +344,17 @@ export function OrderPanel({
 
         {activeOrder && (
           <div className="space-y-2">
+            {activeOrder.orderType === ORDER_TYPE.DINE_IN && (
+              <Button
+                variant="outline"
+                className="w-full h-12"
+                onClick={onPrintKitchen}
+                disabled={isPrintingKitchen}
+              >
+                <Printer className="w-4 h-4 ml-1" />
+                {t("printKitchen")}
+              </Button>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"

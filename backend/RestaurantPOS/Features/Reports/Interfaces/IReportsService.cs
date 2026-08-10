@@ -9,7 +9,9 @@ namespace RestaurantPOS.Features.Reports
 {
     public interface IReportsService
     {
+        Task<DateTime> GetCurrentBusinessDateAsync();
         Task<DailySalesReportDto> GetDailyReportAsync(DateTime date);
+        Task<DailyDetailsDto> GetDailyDetailsAsync(DateTime date);
         Task<MonthlySalesReportDto> GetMonthlyReportAsync(int year, int month);
         Task<CustomReportDto> GetCustomReportAsync(DateTime startDate, DateTime endDate);
         Task<IEnumerable<DeliveryReportDto>> GetDeliveryReportAsync(DateTime startDate, DateTime endDate);

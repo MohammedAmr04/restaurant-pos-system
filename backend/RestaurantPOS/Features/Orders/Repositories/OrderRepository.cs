@@ -74,10 +74,10 @@ namespace RestaurantPOS.Features.Orders
         {
             var sql = @"INSERT INTO Orders (InvoiceNumber, OrderType, Status, UserId, CustomerId, TableId, DeliveryRiderId, 
                        Subtotal, DiscountType, DiscountValue, ServiceCharge, Tax, GrandTotal, PaymentMethod, PaidAmount, 
-                       BusinessDate, CompletedAt, CreatedAt) 
+                       IsForeign, BusinessDate, CompletedAt, CreatedAt) 
                        VALUES (@InvoiceNumber, @OrderType, @Status, @UserId, @CustomerId, @TableId, @DeliveryRiderId, 
                        @Subtotal, @DiscountType, @DiscountValue, @ServiceCharge, @Tax, @GrandTotal, @PaymentMethod, @PaidAmount, 
-                       @BusinessDate, @CompletedAt, @CreatedAt);
+                       @IsForeign, @BusinessDate, @CompletedAt, @CreatedAt);
                        SELECT last_insert_rowid();";
             return await _connection.ExecuteScalarAsync<int>(sql, order);
         }
@@ -89,7 +89,7 @@ namespace RestaurantPOS.Features.Orders
                            CustomerId = @CustomerId, TableId = @TableId, DeliveryRiderId = @DeliveryRiderId, 
                            Subtotal = @Subtotal, DiscountType = @DiscountType, DiscountValue = @DiscountValue, 
                            ServiceCharge = @ServiceCharge, Tax = @Tax, GrandTotal = @GrandTotal, 
-                           PaymentMethod = @PaymentMethod, PaidAmount = @PaidAmount, BusinessDate = @BusinessDate, 
+                           PaymentMethod = @PaymentMethod, PaidAmount = @PaidAmount, IsForeign = @IsForeign, BusinessDate = @BusinessDate, 
                            CompletedAt = @CompletedAt, UpdatedAt = @UpdatedAt 
                        WHERE Id = @Id";
             var affectedRows = await _connection.ExecuteAsync(sql, order);
@@ -103,10 +103,10 @@ namespace RestaurantPOS.Features.Orders
             return affectedRows > 0;
         }
 
-        public async Task<string> GetNextInvoiceNumberAsync()
+        public async Task<string> GetNextInvoiceNumberAsync(DateTime businessDate)
         {
-            var today = DateTime.Now.ToString("yyyy-MM-dd");
-            var prefix = DateTime.Now.ToString("yyyyMMdd");
+            var today = businessDate.Date.ToString("yyyy-MM-dd");
+            var prefix = businessDate.Date.ToString("yyyyMMdd");
             var sql = "SELECT COUNT(*) FROM Orders WHERE date(BusinessDate) = @BusinessDate";
             var count = await _connection.ExecuteScalarAsync<int>(sql, new { BusinessDate = today });
             return $"{prefix}-{(count + 1).ToString("D4")}";

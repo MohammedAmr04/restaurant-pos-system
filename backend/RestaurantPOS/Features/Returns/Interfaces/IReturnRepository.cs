@@ -8,6 +8,7 @@ namespace RestaurantPOS.Features.Returns
     {
         Task<IEnumerable<Return>> GetAllAsync();
         Task<Return> GetByIdAsync(int id);
+        Task<Return> GetByOrderIdAsync(int orderId);
         Task<int> CreateAsync(Return returnEntity);
     }
 }

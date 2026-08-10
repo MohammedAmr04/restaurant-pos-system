@@ -5,5 +5,7 @@ namespace RestaurantPOS.Features.Printing
         void PrintReceipt(byte[] receiptBytes, string copyName);
         void PrintOrderReceipts(Orders.OrderDto order, Settings.SettingsDto settings);
         void PrintCashierCopy(Orders.OrderDto order, Settings.SettingsDto settings);
+        void PrintKitchenCopy(Orders.OrderDto order, Settings.SettingsDto settings);
+        void PrintDailyReport(Reports.DailySalesReportDto report, Settings.SettingsDto settings);
     }
 }
