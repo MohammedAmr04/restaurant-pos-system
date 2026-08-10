@@ -230,7 +230,7 @@ namespace RestaurantPOS.Features.Reports
                 "SELECT COUNT(*) FROM MenuItems");
 
             var availableMenuItems = await _connection.QuerySingleAsync<int>(
-                "SELECT COUNT(*) FROM MenuItems WHERE IsActive = 1");
+                "SELECT COUNT(*) FROM MenuItems WHERE IsAvailable = 1");
 
             return new DashboardSummaryDto
             {
