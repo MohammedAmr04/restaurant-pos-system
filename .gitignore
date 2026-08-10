@@ -37,8 +37,6 @@ coverage/
 # ==========================================
 # Environment Variables
 # ==========================================
-.env
-.env.*
 !.env.example
 
 # ==========================================
@@ -57,7 +55,6 @@ desktop.ini
 # ==========================================
 # IDE
 # ==========================================
-.vscode/
 !.vscode/extensions.json
 !.vscode/settings.json
 
@@ -168,3 +165,4 @@ final .net 4.8/
 nuget.exe
 *.png
 backend/RestaurantPOS/wwwroot/
+config.bat
