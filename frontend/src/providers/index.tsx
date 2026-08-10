@@ -11,8 +11,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 60 * 1000,
-            retry: 1,
+            retry: 2,
+            refetchInterval: 15_000,
           },
           mutations: {
             onError: (error: Error) => {
